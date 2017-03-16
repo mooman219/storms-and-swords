@@ -1,0 +1,8 @@
+[package]
+name = "rust_game"
+version = "0.1.0"
+authors = ["tucker"]
+
+[dependencies]
+glium = "*"
+image = "*"
