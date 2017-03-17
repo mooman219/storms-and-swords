@@ -14,6 +14,7 @@ fn main() {
     use glium::{DisplayBuild, Surface};
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
+    println!("{:?}", display.get_opengl_version());
     println!("{:?}", display.get_supported_glsl_version());
     
 /*
