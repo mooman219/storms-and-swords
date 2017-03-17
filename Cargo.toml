@@ -1,7 +1,7 @@
 [package]
-name = "rust_game"
+name = "storms-and-swords"
 version = "0.1.0"
-authors = ["tucker"]
+authors = ["tucker, mooman219"]
 
 [dependencies]
 glium = "*"
