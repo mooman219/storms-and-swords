@@ -9,8 +9,11 @@ use std::io::Cursor;
 
 
 fn main() {
+    /*
     use glium::{DisplayBuild, Surface};
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
+
+
     let image = image::load(Cursor::new(&include_bytes!("../opengl.png")[..])
                                         ,image::PNG).unwrap().to_rgb();
 
@@ -92,4 +95,5 @@ fn main() {
             }
         }
     }
+    */
 }

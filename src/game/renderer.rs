@@ -16,8 +16,3 @@ impl Renderer {
     }
 
 }
-
-impl Component for Renderer {
-
-}
-
