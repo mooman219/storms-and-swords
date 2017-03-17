@@ -2,13 +2,16 @@
 extern crate glium;
 extern crate image;
 
+pub mod game;
+pub mod graphics;
 pub mod math;
 
 use math::vertex::Vertex;
-use std::io::Cursor;
-
 
 fn main() {
+
+
+
     /*
     use glium::{DisplayBuild, Surface};
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
