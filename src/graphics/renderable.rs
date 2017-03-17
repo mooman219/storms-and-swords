@@ -1,5 +1,5 @@
-use glium::{DisplayBuild, Surface};
+use glium::Frame;
 
 pub trait Renderable {
-//    pub fn render(&mut self, )
+    fn render(&mut self, frame : &mut Frame);
 }

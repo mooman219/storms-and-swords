@@ -21,6 +21,8 @@ impl Entity {
     }
 
     pub fn remove_component(&mut self, name: String) {
-     //   self.components.remove(name);
+        self.components.remove(&name);
     }
+
+    
 }

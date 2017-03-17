@@ -5,17 +5,18 @@ extern crate image;
 pub mod game;
 pub mod graphics;
 pub mod math;
-
+use std::io::Cursor;
 use graphics::vertex::Vertex;
 
 fn main() {
 
 
-
-    /*
     use glium::{DisplayBuild, Surface};
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
+    println!("{:?}", display.get_supported_glsl_version());
+    
+/*
 
     let image = image::load(Cursor::new(&include_bytes!("../opengl.png")[..])
                                         ,image::PNG).unwrap().to_rgb();
