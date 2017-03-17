@@ -6,7 +6,7 @@ pub mod game;
 pub mod graphics;
 pub mod math;
 
-use math::vertex::Vertex;
+use graphics::vertex::Vertex;
 
 fn main() {
 
