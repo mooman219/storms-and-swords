@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate glium;
 extern crate image;
+extern crate cgmath;
 
 pub mod game;
 pub mod graphics;
