@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use cgmath::Vector3;
 
 pub struct Entity {
-    pub name: String,
-    pub components: HashMap<String, Box<Component>>,
-    pub position: Vector3<f32>,
-    pub scale: Vector3<f32>,
-    pub rotation: Vector3<f32>
+    name: String,
+    components: HashMap<String, Box<Component>>,
+    position: Vector3<f32>,
+    scale: Vector3<f32>,
+    rotation: Vector3<f32>
 }
 
 impl Entity {
@@ -24,5 +24,7 @@ impl Entity {
         self.components.remove(&name);
     }
 
-    
+    pub fn get_position(&self) -> Vector3<f32> {
+        self.position.clone() 
+    }
 }
