@@ -1,5 +1,5 @@
 use glium::Frame;
 
 pub trait Renderable {
-    fn render(&mut self, frame : &mut Frame);
+    fn render(&self, frame : &mut Frame);
 }
