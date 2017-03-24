@@ -27,4 +27,12 @@ impl Entity {
     pub fn get_position(&self) -> Vector3<f32> {
         self.position.clone() 
     }
+
+    pub fn get_rotation(&self) -> Vector3<f32> {
+        self.rotation.clone()
+    }
+    
+    pub fn get_scale(&self) -> Vector3<f32> {
+        self.scale.clone()
+    }
 }
