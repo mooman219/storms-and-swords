@@ -19,7 +19,6 @@ fn main() {
     println!("{:?}", display.get_supported_glsl_version());
     
 /*
-
     let image = image::load(Cursor::new(&include_bytes!("../opengl.png")[..])
                                         ,image::PNG).unwrap().to_rgb();
 
