@@ -4,13 +4,17 @@ use graphics::vertex::Vertex;
 use glium::{self, Frame, VertexBuffer, IndexBuffer};
 use glium::Display;
 use game::entity::Entity;
+use game::component::Component;
 use cgmath::{Vector3, Matrix4};
+use std::rc::Rc;
 
 pub struct SpriteComponent {
     sprite: Sprite,
     vertex_buffer: VertexBuffer<Vertex>,
     index_buffer: IndexBuffer<u16>,
-    entity: Option<Box<Entity>>
+    entity: Option<Rc<Entity>>,
+    sprite_shader: glium::Program,
+//    uid: UID,
 }
 
 impl SpriteComponent {
@@ -22,21 +26,59 @@ impl SpriteComponent {
         let indices = [0, 1, 2, 2, 1, 3];
         let index_buffer = IndexBuffer::new(display, glium::index::PrimitiveType::TrianglesList,
                                             &indices).unwrap();
-        
-        SpriteComponent{sprite: sprite, vertex_buffer: vertex_buffer, index_buffer: index_buffer, entity: None}
-    }
-    
-    /*
-    pub fn set_entity(&mut self, entity: &Entity) {
-        self.entity = Some(Box::new(entity));
-    }
-    */
 
+        let vertex_shader_src = r#"
+            #version 140
+
+            in vec2 position;
+            in vec2 tex_coords;
+            out vec2 v_tex_coords;
+
+            uniform mat4 matrix;
+
+            void main() {
+               v_tex_coords = tex_coords;
+               gl_Position = matrix *  vec4(position, 0.0, 1.0);
+            }
+        "#;
+
+
+         let fragment_shader_src = r#"
+            #version 140
+            
+            in vec2 v_tex_coords;
+            out vec4 color;
+
+            uniform sampler2D tex;
+
+            void main() {
+                color = texture(tex, v_tex_coords);
+            }
+        "#;
+
+        let program = glium::Program::from_source(display, vertex_shader_src, fragment_shader_src, None).unwrap();
+        
+        SpriteComponent{sprite: sprite,
+                        vertex_buffer: vertex_buffer,
+                        index_buffer: index_buffer,
+                        sprite_shader: program}
+    }
+}
+
+impl Component for SpriteComponent {
+
+    fn set_entity(&mut self, entity: &Entity) {
+        self.entity = entity;
+   }
+
+    fn get_name(&self) -> String {
+        return "SpriteComponent".to_string();
+    }    
 }
 
 impl Renderable for SpriteComponent {
     fn render (&self, frame: &mut Frame) {
-        
+        /*
         match self.entity {
             Some(ref entity) => {
                 let pos = entity.get_position();
@@ -100,6 +142,7 @@ impl Renderable for SpriteComponent {
                 println!("Cannot render");
             }
         }
+        */
         //program -> this I can almost do at compile time
         /*
         let translation = 
