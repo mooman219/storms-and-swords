@@ -2,18 +2,12 @@ use ::game::component::Component;
 use std::collections::HashMap;
 use cgmath::Vector3;
 
-<<<<<<< HEAD
 //it is this large for two reasons, one I want to make sure that we never run out to space, and second so that we can have negative uids for flag varibles
 //type UID = i64;
 
 pub struct Entity<'a>{
     name: String,
     components: HashMap<String, &'a Component>,
-=======
-pub struct Entity {
-    name: String,
-    components: HashMap<String, Box<Component>>,
->>>>>>> adb54650e7336494cd9d626caa517be110f8a56f
     position: Vector3<f32>,
     scale: Vector3<f32>,
     rotation: Vector3<f32>
