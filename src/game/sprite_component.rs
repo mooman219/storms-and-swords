@@ -14,7 +14,6 @@ pub struct SpriteComponent {
     index_buffer: IndexBuffer<u16>,
     entity: Option<Rc<Entity>>,
     sprite_shader: glium::Program,
-//    uid: UID,
 }
 
 impl SpriteComponent {
@@ -74,6 +73,12 @@ impl Component for SpriteComponent {
     fn get_name(&self) -> String {
         return "SpriteComponent".to_string();
     }    
+    
+    /*
+    pub fn set_entity(&mut self, entity: &Entity) {
+        self.entity = Some(Box::new(entity));
+    }
+    */
 }
 
 impl Renderable for SpriteComponent {

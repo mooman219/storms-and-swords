@@ -6,6 +6,7 @@ extern crate cgmath;
 pub mod game;
 pub mod graphics;
 pub mod math;
+pub mod physics;
 use std::io::Cursor;
 use graphics::vertex::Vertex;
 
