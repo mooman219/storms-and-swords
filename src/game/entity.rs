@@ -1,21 +1,21 @@
 use ::game::component::Component;
 use std::collections::HashMap;
 use cgmath::Vector3;
-
+use std::rc::Rc;
 //it is this large for two reasons, one I want to make sure that we never run out to space, and second so that we can have negative uids for flag varibles
 //type UID = i64;
 
-pub struct Entity<'a>{
+pub struct Entity {
     name: String,
-    components: HashMap<String, &'a Component>,
+    components: HashMap<String, Box<Component>>,
     position: Vector3<f32>,
     scale: Vector3<f32>,
     rotation: Vector3<f32>
 }
 
-impl<'a> Entity<'a> {
+impl Entity {
 
-    pub fn add_component(&mut self, component: &'a Component) -> bool {
+    pub fn add_component(&mut self, component: Box<Component>) -> bool {
         if !self.components.contains_key(&component.get_name()) {
 
             self.components.insert(component.get_name(), component);

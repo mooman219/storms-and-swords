@@ -1,5 +1,6 @@
 use glium::Frame;
+use game::entity::Entity;
 
 pub trait Renderable {
-    fn render(&self, frame : &mut Frame);
+    fn render(&self, entity: &Entity, frame : &mut Frame);
 }
