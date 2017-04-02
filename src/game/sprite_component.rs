@@ -2,11 +2,10 @@ use graphics::sprite::Sprite;
 use graphics::renderable::Renderable;
 use graphics::vertex::Vertex;
 use glium::{self, Frame, VertexBuffer, IndexBuffer};
-use glium::Display;
+use glium::{Display, Surface};
 use game::entity::Entity;
 use game::component::Component;
-use cgmath::{Vector3, Matrix4};
-use std::rc::Rc;
+use cgmath::Matrix4;
 
 pub struct SpriteComponent {
     sprite: Sprite,
@@ -76,7 +75,7 @@ impl Component for SpriteComponent {
 }
 
 impl Renderable for SpriteComponent {
-    fn render (&self, entity: &Entity, frame: &mut Frame) {
+    fn render (&self, entity: &Entity, mut frame: Frame) {
         
         let pos = entity.get_position();
 
@@ -130,7 +129,16 @@ impl Renderable for SpriteComponent {
                     ],
             tex: self.sprite.get_texture()
         };
+        let params = glium::DrawParameters {
+            blend: glium::Blend::alpha_blending(),
+            .. Default::default()
+        };
 
+        frame.draw(&self.vertex_buffer, &self.index_buffer, &self.sprite_shader, &uni, &params).unwrap();
+
+
+        frame.finish().unwrap();
+       // frame.finish().unwrap();
         //program -> this I can almost do at compile time
         /*
         let translation = 

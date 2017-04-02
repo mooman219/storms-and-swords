@@ -23,7 +23,7 @@ impl AABB2 {
         true
     }
 
-    pub fn slide(&mut self, movement: Vector2<f32>, asdf: Vec<AABB2>) {}
+    pub fn slide(&mut self, _movement: Vector2<f32>, _asdf: Vec<AABB2>) {}
 }
 
 impl AABB3 {

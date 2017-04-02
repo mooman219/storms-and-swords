@@ -7,8 +7,13 @@ pub mod game;
 pub mod graphics;
 pub mod math;
 pub mod physics;
-use std::io::Cursor;
+
 use graphics::vertex::Vertex;
+use game::world::World;
+use game::entity::Entity;
+use game::sprite_component::SpriteComponent;
+use graphics::sprite::Sprite;
+use graphics::renderable::Renderable;
 
 fn main() {
 
@@ -16,8 +21,47 @@ fn main() {
     use glium::{DisplayBuild, Surface};
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
 
+    let mut world = World::new();
+    let entity_uid = world.get_uid();
+    let entity = Entity::new("Test entity".to_string(), entity_uid.clone());
+    let sprite = Sprite::new("image.png".to_string(), &display);
+    let sprite_component = SpriteComponent::new(sprite,
+                                                    Vertex{position: [-0.5,  0.5], tex_coords: [1.0, 0.0]},
+                                                    Vertex{position: [ 0.5,  0.5], tex_coords: [1.0, 1.0]},
+                                                    Vertex{position: [-0.5, -0.5], tex_coords: [0.0, 0.0]},
+                                                    Vertex{position: [ 0.5, -0.5], tex_coords: [0.0, 1.0]},
+                                                    &display);
+                                                
+    world.add_entity(entity);
+    let entity_back = world.get_entity(entity_uid).unwrap();
+    /*
+    let sprite_component = entity_back.get_component("SpriteComponent".to_string()).unwrap();
+    let sprite_component = sprite_component as &Box<SpriteComponent>;
+    */
+
     println!("{:?}", display.get_opengl_version());
     println!("{:?}", display.get_supported_glsl_version());
+
+    loop {
+
+        let mut target = display.draw();
+        {
+            target.clear_color(0.0, 0.0, 1.0, 1.0);
+        }
+
+        sprite_component.render(&entity_back, display.draw());
+
+        
+        target.finish().unwrap();
+
+        for ev in display.poll_events() {
+            match ev {
+                glium::glutin::Event::Closed => return,
+                _ => ()
+            }
+        }
+
+    }
     
 /*
     let image = image::load(Cursor::new(&include_bytes!("../opengl.png")[..])
@@ -86,20 +130,10 @@ fn main() {
             tex: &texture,
         };
 
-        let mut target = display.draw();
-        target.clear_color(0.0, 0.0, 1.0, 1.0);
-        target.draw(&vertex_buffer, &indices, &program, &uniform,
-                    &Default::default()).unwrap();
 
 
-        target.finish().unwrap();
 
-        for ev in display.poll_events() {
-            match ev {
-                glium::glutin::Event::Closed => return,
-                _ => ()
-            }
-        }
+        
     }
     */
 }

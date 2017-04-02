@@ -1,6 +1,4 @@
-use image::RgbaImage;
 use image;
-use std::io::Cursor;
 use glium::texture::Texture2d;
 use glium::{self};
 use glium::backend::glutin_backend::GlutinFacade;
