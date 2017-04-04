@@ -38,7 +38,7 @@ impl AABB2 {
         }
 
         let mut res = mov; // Copy
-        let mut aabb = self; // Copy
+        let mut aabb = self; // Copycc
 
         // Y movement
 
@@ -115,6 +115,7 @@ impl AABB3 {
     }
 }
 
+#[allow(unused_imports)]
 mod tests {
     use super::*;
     use test::*;
@@ -137,21 +138,19 @@ mod tests {
         }
     }
 
-    fn data() -> Vec<AABB2> {
-        vec![AABB2::new(2f32, 0f32, 3f32, 1f32),
-             AABB2::new(0f32, 1f32, 1f32, 2f32),
-             AABB2::new(3f32, 1f32, 4f32, 2f32),
-             AABB2::new(1f32, 2f32, 2f32, 3f32),
-
-             AABB2::new(2f32, 0f32, 3f32, 1f32),
-             AABB2::new(0f32, 1f32, 1f32, 2f32),
-             AABB2::new(3f32, 1f32, 4f32, 2f32),
-             AABB2::new(1f32, 2f32, 2f32, 3f32)]
-    }
-
     #[bench]
     fn bench_test(b: &mut Bencher) {
-        let v = data();
+        let v = vec![
+            AABB2::new(2f32, 0f32, 3f32, 1f32),
+            AABB2::new(0f32, 1f32, 1f32, 2f32),
+            AABB2::new(3f32, 1f32, 4f32, 2f32),
+            AABB2::new(1f32, 2f32, 2f32, 3f32),
+
+            AABB2::new(2f32, 0f32, 3f32, 1f32),
+            AABB2::new(0f32, 1f32, 1f32, 2f32),
+            AABB2::new(3f32, 1f32, 4f32, 2f32),
+            AABB2::new(1f32, 2f32, 2f32, 3f32),
+        ];
         b.iter(|| {
             let mut aabb = AABB2::new(0f32, 0f32, 1f32, 1f32);
 
