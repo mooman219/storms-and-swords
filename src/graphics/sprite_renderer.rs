@@ -1,4 +1,18 @@
-use graphics::sprite::Sprite;
+use cgmath::Vector3;
+use game::ContentId;
+
+
+/*
+*    Each character in game that wants to be rendered must present one of these perframe that it wants to be rendered  
+*/
+pub struct SpriteRenderData {
+    pub pos: Vector3<f32>,
+    pub scale: Vector3<f32>,
+    pub rotation: Vector3<f32>,
+    pub sprite: ContentId
+}
+
+/*use graphics::sprite::Sprite;
 use graphics::renderable::Renderable;
 use graphics::vertex::Vertex;
 use glium::{self, Frame, VertexBuffer, IndexBuffer};
@@ -38,7 +52,6 @@ impl SpriteComponent {
                gl_Position = matrix *  vec4(position, 0.0, 1.0);
             }
         "#;
-
 
          let fragment_shader_src = r#"
             #version 140
@@ -136,7 +149,6 @@ impl Renderable for SpriteComponent {
 
         frame.draw(&self.vertex_buffer, &self.index_buffer, &self.sprite_shader, &uni, &params).unwrap();
 
-
         frame.finish().unwrap();
        // frame.finish().unwrap();
         //program -> this I can almost do at compile time
@@ -165,3 +177,4 @@ impl Renderable for SpriteComponent {
     }
 }
 
+*/

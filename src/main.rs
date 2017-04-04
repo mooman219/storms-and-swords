@@ -8,19 +8,11 @@ pub mod graphics;
 pub mod math;
 pub mod physics;
 
-use graphics::vertex::Vertex;
-use game::world::World;
-use game::entity::Entity;
-use game::sprite_component::SpriteComponent;
-use graphics::sprite::Sprite;
-use graphics::renderable::Renderable;
-
 fn main() {
 
-
-    use glium::{DisplayBuild, Surface};
+    use glium::{DisplayBuild};//, Surface};
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
-
+    /*
     let mut world = World::new();
     let entity_uid = world.get_uid();
     let entity = Entity::new("Test entity".to_string(), entity_uid.clone());
@@ -34,19 +26,17 @@ fn main() {
                                                 
     world.add_entity(entity);
     let entity_back = world.get_entity(entity_uid).unwrap();
-    /*
     let sprite_component = entity_back.get_component("SpriteComponent".to_string()).unwrap();
     let sprite_component = sprite_component as &Box<SpriteComponent>;
     */
-
     println!("{:?}", display.get_opengl_version());
     println!("{:?}", display.get_supported_glsl_version());
-
+    /*
     loop {
 
         let mut target = display.draw();
         {
-            target.clear_color(0.0, 0.0, 1.0, 1.0);
+            target.clear_color(1.0, 0.5, 0.1, 1.0);
         }
 
         sprite_component.render(&entity_back, display.draw());
@@ -62,7 +52,7 @@ fn main() {
         }
 
     }
-    
+    */
 /*
     let image = image::load(Cursor::new(&include_bytes!("../opengl.png")[..])
                                         ,image::PNG).unwrap().to_rgb();
