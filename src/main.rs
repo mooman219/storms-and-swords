@@ -1,7 +1,10 @@
+#![feature(test)]
+
 #[macro_use]
 extern crate glium;
 extern crate image;
 extern crate cgmath;
+extern crate test;
 
 pub mod game;
 pub mod graphics;
