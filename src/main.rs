@@ -10,11 +10,13 @@ pub mod game;
 pub mod graphics;
 pub mod math;
 pub mod physics;
+pub mod content;
 
 fn main() {
 
     use glium::{DisplayBuild};//, Surface};
     let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
+   
     /*
     let mut world = World::new();
     let entity_uid = world.get_uid();

@@ -1,1 +1,1 @@
-mod image_loader;
+pub mod load_content;
