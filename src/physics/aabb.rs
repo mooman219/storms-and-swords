@@ -1,26 +1,20 @@
 use cgmath::{Vector2, Vector3};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct AABB2 {
+pub struct AABB2D {
     pub min: Vector2<f32>,
     pub max: Vector2<f32>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct AABB3 {
-    pub min: Vector3<f32>,
-    pub max: Vector3<f32>,
-}
-
-impl AABB2 {
-    pub fn new(minx: f32, miny: f32, maxx: f32, maxy: f32) -> AABB2 {
-        AABB2 {
+impl AABB2D {
+    pub fn new(minx: f32, miny: f32, maxx: f32, maxy: f32) -> AABB2D {
+        AABB2D {
             min: Vector2 { x: minx, y: miny },
             max: Vector2 { x: maxx, y: maxy },
         }
     }
 
-    pub fn intersects(&self, other: AABB2) -> bool {
+    pub fn intersects(&self, other: AABB2D) -> bool {
         if self.max.x < other.min.x || self.min.x > other.max.x {
             return false;
         }
@@ -31,14 +25,14 @@ impl AABB2 {
     }
 
     pub fn slide<'a, T>(&mut self, mov: Vector2<f32>, others: T)
-        where T: Iterator<Item = &'a AABB2> + Clone
+        where T: Iterator<Item = &'a AABB2D> + Clone
     {
         if mov.x == 0f32 && mov.y == 0f32 {
             return;
         }
 
         let mut res = mov; // Copy
-        let mut aabb = self; // Copycc
+        let mut aabb = self; // Copy
 
         // Y movement
 
@@ -100,59 +94,42 @@ impl AABB2 {
     }
 }
 
-impl AABB3 {
-    pub fn intersects(&self, other: AABB3) -> bool {
-        if self.max.x < other.min.x || self.min.x > other.max.x {
-            return false;
-        }
-        if self.max.y < other.min.y || self.min.y > other.max.y {
-            return false;
-        }
-        if self.max.z < other.min.z || self.min.z > other.max.z {
-            return false;
-        }
-        true
-    }
-}
-
 #[allow(unused_imports)]
 mod tests {
     use super::*;
     use test::*;
 
     #[test]
-    fn aabb2_slide_test() {
-        let v = vec![AABB2::new(2f32, 0f32, 3f32, 1f32), AABB2::new(0f32, 1f32, 1f32, 2f32)];
-        let mut aabb = AABB2::new(0f32, 0f32, 1f32, 1f32);
+    fn AABB2D_slide_test() {
+        let v = vec![AABB2D::new(2f32, 0f32, 3f32, 1f32), AABB2D::new(0f32, 1f32, 1f32, 2f32)];
+        let mut aabb = AABB2D::new(0f32, 0f32, 1f32, 1f32);
 
         {
             let mot = Vector2::new(2f32, 0f32);
             aabb.slide(mot, v.iter());
-            assert_eq!(aabb, AABB2::new(1f32, 0f32, 2f32, 1f32));
+            assert_eq!(aabb, AABB2D::new(1f32, 0f32, 2f32, 1f32));
         }
 
         {
             let mot = Vector2::new(-4f32, 1f32);
             aabb.slide(mot, v.iter());
-            assert_eq!(aabb, AABB2::new(1f32, 1f32, 2f32, 2f32));
+            assert_eq!(aabb, AABB2D::new(1f32, 1f32, 2f32, 2f32));
         }
     }
 
     #[bench]
     fn bench_test(b: &mut Bencher) {
-        let v = vec![
-            AABB2::new(2f32, 0f32, 3f32, 1f32),
-            AABB2::new(0f32, 1f32, 1f32, 2f32),
-            AABB2::new(3f32, 1f32, 4f32, 2f32),
-            AABB2::new(1f32, 2f32, 2f32, 3f32),
+        let v = vec![AABB2D::new(2f32, 0f32, 3f32, 1f32),
+                     AABB2D::new(0f32, 1f32, 1f32, 2f32),
+                     AABB2D::new(3f32, 1f32, 4f32, 2f32),
+                     AABB2D::new(1f32, 2f32, 2f32, 3f32),
 
-            AABB2::new(2f32, 0f32, 3f32, 1f32),
-            AABB2::new(0f32, 1f32, 1f32, 2f32),
-            AABB2::new(3f32, 1f32, 4f32, 2f32),
-            AABB2::new(1f32, 2f32, 2f32, 3f32),
-        ];
+                     AABB2D::new(2f32, 0f32, 3f32, 1f32),
+                     AABB2D::new(0f32, 1f32, 1f32, 2f32),
+                     AABB2D::new(3f32, 1f32, 4f32, 2f32),
+                     AABB2D::new(1f32, 2f32, 2f32, 3f32)];
         b.iter(|| {
-            let mut aabb = AABB2::new(0f32, 0f32, 1f32, 1f32);
+            let mut aabb = AABB2D::new(0f32, 0f32, 1f32, 1f32);
 
             {
                 let mot = black_box(Vector2::new(2f32, 0f32));
