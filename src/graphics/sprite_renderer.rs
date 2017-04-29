@@ -7,21 +7,20 @@ use graphics::sprite::Sprite;
 
 
 /*
-*    Each character in game that wants to be rendered must present one of these perframe that it wants to be rendered  
+*    Each character in game that wants to be rendered must present one of these perframe that it wants to be rendered
 */
 pub struct SpriteRenderData {
     pub pos: Vector3<f32>,
     pub scale: Vector3<f32>,
     pub rotation: Vector3<f32>,
-    pub sprite: ContentId
+    pub sprite: ContentId,
 }
 
 pub struct SpriteRenderer {
-    sprite_shader: glium::Program
+    sprite_shader: glium::Program,
 }
 
 impl SpriteRenderer {
-
     pub fn new(display: &Display) -> SpriteRenderer {
         let vertex_shader_src = r#"
             #version 140
@@ -38,7 +37,7 @@ impl SpriteRenderer {
             }
         "#;
 
-         let fragment_shader_src = r#"
+        let fragment_shader_src = r#"
             #version 140
             
             in vec2 v_tex_coords;
@@ -49,48 +48,100 @@ impl SpriteRenderer {
             void main() {
                 color = texture(tex, v_tex_coords);
             }
-        "#; 
+        "#;
 
-        let program = glium::Program::from_source(display, vertex_shader_src, fragment_shader_src, None).unwrap();
-        SpriteRenderer{sprite_shader: program}
+        let program =
+            glium::Program::from_source(display, vertex_shader_src, fragment_shader_src, None)
+                .unwrap();
+        SpriteRenderer { sprite_shader: program }
     }
 
     pub fn render(&self, spr: SpriteRenderData, sprite: &Sprite, mut frame: Frame) {
 
-        let translation_matrix : Matrix4<f32> = Matrix4::new(
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            spr.pos.x, spr.pos.y, spr.pos.z, 1.0f32
-        );
+        let translation_matrix: Matrix4<f32> = Matrix4::new(1.0,
+                                                            0.0,
+                                                            0.0,
+                                                            0.0,
+                                                            0.0,
+                                                            1.0,
+                                                            0.0,
+                                                            0.0,
+                                                            0.0,
+                                                            0.0,
+                                                            1.0,
+                                                            0.0,
+                                                            spr.pos.x,
+                                                            spr.pos.y,
+                                                            spr.pos.z,
+                                                            1.0f32);
 
-        let scale_matrix: Matrix4<f32> = Matrix4::new(
-            spr.scale.x, 0.0, 0.0, 0.0,
-            0.0, spr.scale.y, 0.0, 0.0,
-            0.0, 0.0, spr.scale.z, 0.0,
-            0.0, 0.0, 0.0, 1.0f32
-        );
+        let scale_matrix: Matrix4<f32> = Matrix4::new(spr.scale.x,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      spr.scale.y,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      spr.scale.z,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      1.0f32);
 
-        let x_rot_matrix : Matrix4<f32> = Matrix4::new(
-            1.0, 0.0, 0.0, 0.0,
-            0.0,  spr.rotation.x.cos(), -spr.rotation.x.sin(), 0.0,
-            0.0,  spr.rotation.x.sin(),  spr.rotation.x.cos(), 0.0,
-            0.0, 0.0, 0.0, 1.0
-        );
+        let x_rot_matrix: Matrix4<f32> = Matrix4::new(1.0,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      spr.rotation.x.cos(),
+                                                      -spr.rotation.x.sin(),
+                                                      0.0,
+                                                      0.0,
+                                                      spr.rotation.x.sin(),
+                                                      spr.rotation.x.cos(),
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      1.0);
 
-        let y_rot_matrix : Matrix4<f32> = Matrix4::new(
-            spr.rotation.y.cos(), -spr.rotation.y.sin(), 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0, 
-            -spr.rotation.y.sin(), 0.0, spr.rotation.x.cos(), 0.0,
-            0.0, 0.0, 0.0, 1.0
-        );
-        
-        let z_rot_matrix : Matrix4<f32> = Matrix4::new(
-            spr.rotation.z.cos(), -spr.rotation.z.sin(), 0.0, 0.0,
-            spr.rotation.z.sin(),  spr.rotation.z.cos(),  0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0
-        );
+        let y_rot_matrix: Matrix4<f32> = Matrix4::new(spr.rotation.y.cos(),
+                                                      -spr.rotation.y.sin(),
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      1.0,
+                                                      0.0,
+                                                      0.0,
+                                                      -spr.rotation.y.sin(),
+                                                      0.0,
+                                                      spr.rotation.x.cos(),
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      1.0);
+
+        let z_rot_matrix: Matrix4<f32> = Matrix4::new(spr.rotation.z.cos(),
+                                                      -spr.rotation.z.sin(),
+                                                      0.0,
+                                                      0.0,
+                                                      spr.rotation.z.sin(),
+                                                      spr.rotation.z.cos(),
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      1.0,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      0.0,
+                                                      1.0);
 
         let mut result_matrix = translation_matrix * scale_matrix;
         let rotation_mul = x_rot_matrix * y_rot_matrix * z_rot_matrix;
@@ -105,12 +156,15 @@ impl SpriteRenderer {
                     ],
             tex: sprite.get_texture()
         };
-        let params = glium::DrawParameters {
-            blend: glium::Blend::alpha_blending(),
-            .. Default::default()
-        };
+        let params =
+            glium::DrawParameters { blend: glium::Blend::alpha_blending(), ..Default::default() };
 
-        frame.draw(sprite.get_vertex_buffer(), sprite.get_index_buffer(), &self.sprite_shader, &uni, &params).unwrap();
+        frame.draw(sprite.get_vertex_buffer(),
+                  sprite.get_index_buffer(),
+                  &self.sprite_shader,
+                  &uni,
+                  &params)
+            .unwrap();
 
         frame.finish().unwrap();
     }
