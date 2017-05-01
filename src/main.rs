@@ -17,13 +17,10 @@ pub mod content;
 
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
-use std::marker::{Send, Sync};
-use std::cell::RefCell;
-use std::sync::{Arc, Mutex};
 use std::thread;
 
 
-use content::load_content::{EContentType, EContentRequestType, EContentRequestResult};
+use content::load_content::{EContentType, EContentRequestType, EContentRequestResult, EContentLoadRequst};
 use content::{ContentManifest, LoadContent};
 use graphics::RenderThread;
 use graphics::render_thread::RenderFrame;
@@ -31,9 +28,7 @@ use game::{World, ContentId};
 
 fn main() {
 
-    use glium::DisplayBuild; //, Surface};
-    let display = RefCell::new(glium::glutin::WindowBuilder::new().build_glium().unwrap());
-
+  
     //this is for assets that have been loaded by their threads
     //and then for the content manifest to keep track of them
     let (load_subthread_sender, content_manifest_asset_receiver): (Sender<EContentType>,
@@ -49,7 +44,7 @@ fn main() {
     //this is for the render thread to ask the content manifest for an asset
     //and for the content manifest to handle that request
     let (render_thread_asset_request, content_manifest_request_fulfillment)
-            : (Sender<ContentId>, Receiver<ContentId>)
+            : (Sender<EContentLoadRequst>, Receiver<EContentLoadRequst>)
             = mpsc::channel();
 
     //this is for the content manifest to send assets that the loading thread has asked for
@@ -69,32 +64,40 @@ fn main() {
                                                                  Receiver<RenderFrame>) =
         mpsc::channel();
 
-    //create a content manifest
-  //  let mut content_manifest = ContentManifest::new();
-   
-   /*
-    let content_join_handle = thread::spawn (move || {ContentManifest::thread_loop(display.clone(),
-                                                                                   content_manifest_asset_receiver,
-                                                                                   content_manifest_request_fulfillment,
-                                                                                   content_manifest_fulfillment.clone())});
-    */
-    /*
+    let _ = thread::spawn(move || {
+        ContentManifest::thread_loop(content_manifest_asset_receiver,
+                                     content_manifest_request_fulfillment,
+                                     content_manifest_fulfillment.clone())
+    });
+
+    
     //create a content loader
-    let mut load_content = LoadContent::new(loading_thread_fulfillment,
+    let load_content = LoadContent::new(loading_thread_fulfillment,
                                             loading_thread_content_id.clone(),
                                             load_subthread_sender.clone());
+
+    let _ = thread::spawn(move || {
+        LoadContent::thread_loop(load_content);
+    });
     
     //create a render loop
-    let mut render_thread = RenderThread::new(&display,
-                                              render_thread_render_frame,
-                                              render_thread_asset_request.clone(),
-                                              render_thread_asset_reciver);
-    
+    let _ = thread::spawn(move || {
+        RenderThread::thread_loop(render_thread_render_frame,
+                                  render_thread_asset_request.clone(),
+                                  render_thread_asset_reciver);
+    });
+
     //create a game thread
-    let mut world = World::new(game_thread_request, 
+    let world = World::new(game_thread_request, 
                                game_thread_content_id,
                                game_thread_render_frame.clone());
-                               */
+
+    let _ = thread::spawn(move || {
+        World::update(world);
+    });
+
+    
+
     /*
     let mut world = World::new();
     let entity_uid = world.get_uid();
@@ -113,7 +116,7 @@ fn main() {
     let sprite_component = sprite_component as &Box<SpriteComponent>;
     */
 
-  //  println!("{:?}", display.get_opengl_version());
+    //  println!("{:?}", display.get_opengl_version());
     //println!("{:?}", display.get_supported_glsl_version());
 
     /*

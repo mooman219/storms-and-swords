@@ -9,6 +9,7 @@ use graphics::sprite::Sprite;
 /*
 *    Each character in game that wants to be rendered must present one of these perframe that it wants to be rendered
 */
+#[derive(Clone)]
 pub struct SpriteRenderData {
     pub pos: Vector3<f32>,
     pub scale: Vector3<f32>,
@@ -56,7 +57,7 @@ impl SpriteRenderer {
         SpriteRenderer { sprite_shader: program }
     }
 
-    pub fn render(&self, spr: SpriteRenderData, sprite: &Sprite, mut frame: Frame) {
+    pub fn render(&self, spr: &SpriteRenderData, sprite: &Sprite, mut frame: &mut Frame) {
 
         let translation_matrix: Matrix4<f32> = Matrix4::new(1.0,
                                                             0.0,
@@ -166,7 +167,6 @@ impl SpriteRenderer {
                   &params)
             .unwrap();
 
-        frame.finish().unwrap();
     }
 }
 

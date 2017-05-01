@@ -4,6 +4,7 @@ use game::entity::{Entity, UID};
 use std::sync::mpsc::{Receiver, Sender};
 use content::load_content::{EContentRequestType, EContentRequestResult};
 use graphics::render_thread::RenderFrame;
+use game::update_trait::Update;
 
 #[derive(PartialEq, Eq)]
 pub enum ELoadContentError {
@@ -34,6 +35,13 @@ impl World {
         }
     }
 
+
+    pub fn update(world: World) {
+        loop {
+
+        }
+    }
+
     pub fn get_uid(&mut self) -> UID {
         self.uids += 1;
         return self.uids.clone();
@@ -55,7 +63,7 @@ impl World {
         match result {
             Ok(return_content) => {
                 match return_content {
-                    EContentRequestResult::StaticSprite(id) => {
+                    EContentRequestResult::Image(id) => {
                         return Ok(id);
                     }
                 }

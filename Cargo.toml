@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["tucker, mooman219"]
 
 [dependencies]
+image = "0.13.0"
 glium = "0.16.0"
-image = "0.12.3"
 cgmath = "0.12.0"
 threadpool = "1.3.2"

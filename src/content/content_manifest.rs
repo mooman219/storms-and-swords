@@ -1,43 +1,34 @@
 use std::sync::mpsc::{Receiver, Sender};
-use std::cell::RefCell;
 use std::collections::HashMap;
-use graphics::sprite::Sprite;
 use game::ContentId;
-use glium::texture::Texture2d;
-use content::load_content::{EContentType, EContentRequestType};
-use glium::backend::glutin_backend::GlutinFacade;
-use glium;
-
+use content::load_content::{EContentType, EContentLoadRequst};
+use image::DynamicImage;
+  
 pub struct ContentManifest {
-    pub sprites: HashMap<ContentId, Sprite>,
+    pub loaded_images: HashMap<ContentId, DynamicImage>,
     pub loaded_asset_channel: Receiver<EContentType>,
-    pub from_render_thread: Receiver<ContentId>,
-    pub to_render_thread: Sender<EContentType>, 
-    pub display: RefCell<GlutinFacade>,
+    pub from_render_thread: Receiver<EContentLoadRequst>,
+    pub to_render_thread: Sender<EContentType>
 }
 
 impl ContentManifest {
-    pub fn new(display: RefCell<GlutinFacade>,
-               loaded_asset_channel: Receiver<EContentType>,
-               from_render_thread: Receiver<ContentId>,
+    pub fn new(loaded_asset_channel: Receiver<EContentType>,
+               from_render_thread: Receiver<EContentLoadRequst>,
                to_render_thread: Sender<EContentType>)
                -> ContentManifest {
         ContentManifest {
-            sprites: HashMap::new(),
+            loaded_images: HashMap::new(),
             loaded_asset_channel: loaded_asset_channel,
             from_render_thread: from_render_thread,
             to_render_thread: to_render_thread,
-            display: display,
         }
     }
 
-    pub fn thread_loop(display: RefCell<GlutinFacade>,
-                       loaded_asset_channel: Receiver<EContentType>,
-                       from_render_thread: Receiver<ContentId>,
+    pub fn thread_loop(loaded_asset_channel: Receiver<EContentType>,
+                       from_render_thread: Receiver<EContentLoadRequst>,
                        to_render_thread: Sender<EContentType>) {
 
-        let mut content_manifest: ContentManifest = ContentManifest::new(display,
-                                                                         loaded_asset_channel,
+        let mut content_manifest: ContentManifest = ContentManifest::new(loaded_asset_channel,
                                                                          from_render_thread,
                                                                          to_render_thread);
 
@@ -47,20 +38,11 @@ impl ContentManifest {
                 Ok(new_asset) => {
 
                     match new_asset {
-                        EContentType::StaticSprite(contend_id, dynamic_image) => {
-                            /*
-                            let image_dimensions = dynamic_image.to_rgba().dimensions();
-                            let loaded_image = glium::texture::RawImage2d::from_raw_rgba_reversed(dynamic_image.to_rgba().into_raw(), image_dimensions);
-                            let tex = Texture2d::new(content_manifest.display, loaded_image);
-                            match tex {
-                                Ok(tex) => {
-                                    content_manifest.sprites.insert(contend_id, Sprite::new("an_image".to_string(), tex, content_manifest.display);
-                                },
-                                Err(_) => {
-
-                                }
-                            }
-                            */
+                        EContentType::Image(content_id, dynamic_image) => {
+                            content_manifest.loaded_images.insert(content_id, dynamic_image);
+                        },
+                        EContentType::NotLoaded => {
+                            //just pattern matching, for this part, we should never hit this branch
                         }
                     }
                 }
@@ -69,6 +51,24 @@ impl ContentManifest {
                 }
             };
 
+            let load_request = content_manifest.from_render_thread.try_recv();
+            match load_request {
+                Ok(content_request) => {
+                    match content_request {
+                        EContentLoadRequst::Image(content_id) => {
+                            if content_manifest.loaded_images.contains_key(&content_id) {
+                                let _ = content_manifest.to_render_thread.send(EContentType::Image(content_id, content_manifest.loaded_images.get(&content_id).unwrap()));
+                            }
+                            else {
+                                let _ = content_manifest.to_render_thread.send(EContentType::NotLoaded);
+                            }
+                        }
+                    }
+                },
+                Err(_) => {
+
+                }
+            }
 
         }
     }
