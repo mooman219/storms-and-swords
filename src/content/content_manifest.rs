@@ -52,12 +52,13 @@ impl ContentManifest {
             };
 
             let load_request = content_manifest.from_render_thread.try_recv();
+            
             match load_request {
                 Ok(content_request) => {
                     match content_request {
                         EContentLoadRequst::Image(content_id) => {
                             if content_manifest.loaded_images.contains_key(&content_id) {
-                                let _ = content_manifest.to_render_thread.send(EContentType::Image(content_id, content_manifest.loaded_images.get(&content_id).unwrap()));
+                                let _ = content_manifest.to_render_thread.send(EContentType::Image(content_id, content_manifest.loaded_images.remove(&content_id).unwrap()));
                             }
                             else {
                                 let _ = content_manifest.to_render_thread.send(EContentType::NotLoaded);

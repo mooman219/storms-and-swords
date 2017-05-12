@@ -7,24 +7,24 @@ extern crate cgmath;
 extern crate test;
 extern crate threadpool;
 
+#[macro_use]
+mod macros;
+
 pub mod game;
 pub mod graphics;
 pub mod math;
 pub mod physics;
 pub mod content;
 
-
-
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 use std::thread;
-
 
 use content::load_content::{EContentType, EContentRequestType, EContentRequestResult, EContentLoadRequst};
 use content::{ContentManifest, LoadContent};
 use graphics::RenderThread;
 use graphics::render_thread::RenderFrame;
-use game::{World, ContentId};
+use game::World;
 
 fn main() {
 
@@ -86,14 +86,10 @@ fn main() {
                                   render_thread_asset_request.clone(),
                                   render_thread_asset_reciver);
     });
-
-    //create a game thread
-    let world = World::new(game_thread_request, 
+    let _ = thread::spawn(move || {
+        World::update(game_thread_request, 
                                game_thread_content_id,
                                game_thread_render_frame.clone());
-
-    let _ = thread::spawn(move || {
-        World::update(world);
     });
 
     

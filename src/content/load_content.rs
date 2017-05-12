@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::path::Path;
 use std::sync::mpsc::{Receiver, Sender};
 
@@ -9,8 +8,8 @@ use game::ContentId;
 
 #[derive(Clone)]
 enum ELoadContentErr {
-    ProblemFindingImage(String),
-    ProblemConvertingImageToTexture,
+    _ProblemFindingImage(String),
+    _ProblemConvertingImageToTexture,
 }
 
 #[derive(Clone)]
@@ -82,6 +81,8 @@ impl LoadContent {
                                        to_content_manifest_for_thread);
                         };
                         self.thread_pool.execute(clo);
+
+                        let _ = self.to_player_thread.send(EContentRequestResult::Image(use_content_id));
                     }
                 }
             }

@@ -1,10 +1,8 @@
-use image;
 use glium::texture::Texture2d;
 use glium;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::{VertexBuffer, IndexBuffer};
 use graphics::vertex::Vertex;
-use std::path::Path;
 
 
 pub struct Sprite {
@@ -14,7 +12,7 @@ pub struct Sprite {
 }
 
 impl Sprite {
-    pub fn new(image_name: String, texture: Texture2d, display: &GlutinFacade) -> Sprite {
+    pub fn new(_image_name: String, texture: Texture2d, display: &GlutinFacade) -> Sprite {
 
         let bl = Vertex {
             position: [-0.5, 0.5],
