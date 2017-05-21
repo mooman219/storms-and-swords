@@ -12,6 +12,22 @@ pub struct Paddle {
     sprite_id: ContentId,   
 }
 
+
+
+pub struct PaddleController {
+
+}
+
+impl PaddleController {
+    fn update(&self, world: &World) {
+        
+    }
+}
+
+pub struct PaddleModel {
+
+}
+
 impl Paddle {
    
     pub fn new(uid: UID, sprite_id: ContentId) -> Paddle {

@@ -22,7 +22,6 @@ pub struct World {
     pub test : i32,
     pub input: Input,
     pub pad: Paddle,
-
 }
 
 impl World {
@@ -42,7 +41,6 @@ impl World {
             pad: pad
         }
     }
-
 
     pub fn update(to_content_server: Sender<EContentRequestType>,
                   from_cotent_server: Receiver<EContentRequestResult>,
