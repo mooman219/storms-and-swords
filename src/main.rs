@@ -1,11 +1,16 @@
 #![feature(test)]
 
 #[macro_use]
+extern crate gfx;
+extern crate gfx_window_glutin;
+extern crate gfx_app;
+extern crate glutin;
 extern crate glium;
 extern crate image;
 extern crate cgmath;
 extern crate test;
 extern crate threadpool;
+
 
 #[macro_use]
 mod macros;
@@ -27,8 +32,8 @@ use graphics::render_thread::RenderFrame;
 use game::World;
 
 fn main() {
-
-  
+    
+    //let PLEASE = glium::glutin::
     //this is for assets that have been loaded by their threads
     //and then for the content manifest to keep track of them
     let (load_subthread_sender, content_manifest_asset_receiver): (Sender<EContentType>,

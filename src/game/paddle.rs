@@ -2,9 +2,40 @@ use game::entity::{Entity, UID};
 use cgmath::Vector3;
 use game::ContentId;
 use game::world::World;
+use game::input::EKeyCode;
 use graphics::{StaticSprite, SpriteRenderData};
 
-pub struct Paddle {
+pub struct PaddleController {
+
+}
+
+impl PaddleController {
+    
+    pub fn new() -> PaddleController {
+        PaddleController{}
+    }
+
+    pub fn update(&self, world: &World) -> Option<Box<Fn (&mut World)>> {
+            
+            let return_closure = move |inner_world: &mut World| {
+                
+                if inner_world.get_input().get_key_down(EKeyCode::EKeyS) {
+
+                    let new_pos = inner_world.left_paddle.as_ref().unwrap().get_position().clone() + Vector3::new(0f32, -1.0f32, 0.0f32);
+                    inner_world.left_paddle.as_mut().unwrap().set_position(new_pos);
+                }
+
+                if inner_world.get_input().get_key_down(EKeyCode::EKeyW) {
+                    let new_pos = inner_world.left_paddle.as_ref().unwrap().get_position().clone() + Vector3::new(0f32, 1.0f32, 0.0f32);
+                    inner_world.left_paddle.as_mut().unwrap().set_position(new_pos);
+                }
+            };
+
+            return Some(Box::new(return_closure));
+    }
+}
+
+pub struct PaddleModel {
     position: Vector3<f32>,
     scale: Vector3<f32>,
     rotation: Vector3<f32>,
@@ -12,78 +43,45 @@ pub struct Paddle {
     sprite_id: ContentId,   
 }
 
-
-
-pub struct PaddleController {
-
-}
-
-impl PaddleController {
-    fn update(&self, world: &World) {
-        
-    }
-}
-
-pub struct PaddleModel {
-
-}
-
-impl Paddle {
-   
-    pub fn new(uid: UID, sprite_id: ContentId) -> Paddle {
-        Paddle {
-            position: Vector3::new(0.0, 0.0, 0.0),
-            scale: Vector3::new(1.0, 1.0, 1.0),
-            rotation: Vector3::new(0.0, 0.0, 0.0),
+impl PaddleModel  {
+    
+    pub fn new (uid: UID, sprite_id: ContentId) -> PaddleModel {
+        PaddleModel {
+            position: Vector3::new(0.0f32, 0.0f32, 0.0f32),
+            scale: Vector3::new(1.0f32, 1.0f32, 1.0f32),
+            rotation: Vector3::new(0.0f32, 0.0f32, 0.0f32),
             uid: uid,
             sprite_id: sprite_id
         }
     }
-    
-    pub fn update_position(&mut self, delta_time: f32)  {
-        self.position.x += 1.0f32 * delta_time
+
+    pub fn set_position(&mut self, new_pos: Vector3<f32>) {
+        self.position = new_pos;
     }
 
-    pub fn set_position(&mut self, pos: Vector3<f32>) {
-        self.position = pos;
+    pub fn get_position(&self) -> Vector3<f32> {
+        self.position
     }
+
+    pub fn set_scale(&mut self, new_scale: Vector3<f32>) {
+        self.scale = new_scale;
+    }
+
+    pub fn get_scale(&self) -> Vector3<f32> {
+        self.scale
+    }
+
+    pub fn set_rotation(&mut self, new_rot: Vector3<f32>) {
+        self.rotation = new_rot;
+    }
+
+    pub fn get_rotation(&self) -> Vector3<f32> {
+        self.rotation
+    }
+
 }
 
-impl Entity for Paddle {
-    
-    fn get_position(&self) -> Vector3<f32> {
-        self.position.clone()
-    }
-
-
-    fn get_scale(&self) -> Vector3<f32>{
-        self.scale.clone()
-    }
-
-    fn get_rotation(&self) -> Vector3<f32>{
-        self.rotation.clone()
-    }  
-
-    fn get_uid(&self) -> UID{
-        self.uid.clone()
-    }
-    
-    fn update(&self, world: &World) -> Option<Box<Fn(&mut World)>>{
-        
-        if world.input.is_space_down() {
-            
-            let move_action = move |world: &mut World| {
-                world.pad.set_position(Vector3::new(0.0f32, 0.0, 0.0));
-            };
-
-            return Some(Box::new(move_action));        
-        }
-        
-        return None;
-    }
-}
-
-impl StaticSprite for Paddle{
+impl StaticSprite for PaddleModel {
    fn generate_sprite_render_data(&self) -> SpriteRenderData {
         SpriteRenderData {
             pos: self.position.clone(),

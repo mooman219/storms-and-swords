@@ -1,6 +1,13 @@
+
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, Sender};
 
+pub use gfx_app::{ColorFormat, DepthFormat};
+use cgmath::{Deg, Matrix4, Point3, Vector3};
+use gfx::{Bundle, texture};
+use gfx;
+use gfx::traits::FactoryExt;
+use gfx::Device;
 use graphics::sprite_renderer::{SpriteRenderer, SpriteRenderData};
 use glium::{self, DisplayBuild};
 use glium::backend::glutin_backend::GlutinFacade;
@@ -8,11 +15,21 @@ use game::ContentId;
 use content::load_content::{EContentType, EContentLoadRequst};
 use glium::texture::Texture2d;
 use graphics::sprite::Sprite;
+use graphics::vertex::pipe;
 
 #[derive(Clone)]
 pub struct RenderFrame {
     pub sprite_renderers: Vec<SpriteRenderData>,
     pub frame_index: u64, //we keep track so we know in what relation we are to the main game loop
+}
+
+impl RenderFrame {
+    pub fn new(frame_index: u64) -> RenderFrame {
+        RenderFrame{
+            sprite_renderers: vec![],
+            frame_index: frame_index
+        }
+    }
 }
 
 pub struct RenderThread {
@@ -23,6 +40,10 @@ pub struct RenderThread {
     _current_frame_index: u64,
     sprite_renderer: SpriteRenderer,
     sprites: HashMap<ContentId, Sprite>
+}
+
+struct App<R: gfx::Resources> {
+    bundle: Bundle<R, pipe::Data<R>>,
 }
 
 impl RenderThread {
@@ -53,11 +74,14 @@ impl RenderThread {
             let value = self.from_content_manifest.recv().unwrap();
             match value {
                 EContentType::Image(id, dy_image) => {
+                    /*
                     let image_dimensions = dy_image.to_rgba().dimensions();
                     let loaded_image = glium::texture::RawImage2d::from_raw_rgba_reversed(dy_image.to_rgba().into_raw(), image_dimensions);
                     let tex = Texture2d::new(&self.display, loaded_image).unwrap();
                     let spr = Sprite::new("Sprite".to_string(), tex, &self.display);
                     self.sprites.insert(id, spr);
+                    */
+
                     true
                 },
                 EContentType::NotLoaded => {
@@ -78,6 +102,7 @@ impl RenderThread {
     pub fn thread_loop(from_game_thread: Receiver<RenderFrame>,
                        to_content_manifest: Sender<EContentLoadRequst>,
                        from_content_manifest: Receiver<EContentType>) {
+        
 
         let mut rend = RenderThread::new(from_game_thread, to_content_manifest, from_content_manifest);
 
@@ -116,6 +141,8 @@ impl RenderThread {
                     }
                 }
             }
+
+
         }
     }
 }

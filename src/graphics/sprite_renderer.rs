@@ -58,7 +58,7 @@ impl SpriteRenderer {
     }
 
     pub fn render(&self, spr: &SpriteRenderData, sprite: &Sprite, mut frame: &mut Frame) {
-
+        /*
         let translation_matrix: Matrix4<f32> = Matrix4::new(1.0,
                                                             0.0,
                                                             0.0,
@@ -166,8 +166,9 @@ impl SpriteRenderer {
                   &uni,
                   &params)
             .unwrap();
-
+                */
     }
+    
 }
 
 /*use graphics::sprite::Sprite;
