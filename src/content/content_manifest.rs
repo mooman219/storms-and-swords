@@ -31,7 +31,7 @@ impl ContentManifest {
         let mut content_manifest: ContentManifest = ContentManifest::new(loaded_asset_channel,
                                                                          from_render_thread,
                                                                          to_render_thread);
-
+        return;
         loop {
             let possible_new_asset = content_manifest.loaded_asset_channel.try_recv();
             match possible_new_asset {

@@ -55,7 +55,7 @@ impl LoadContent {
     }
 
     pub fn thread_loop(mut content_loader: LoadContent) {
-
+return;
         loop {
             content_loader.inner_thread_loop();
         }

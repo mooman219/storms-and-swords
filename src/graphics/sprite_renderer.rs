@@ -57,7 +57,7 @@ impl SpriteRenderer {
         SpriteRenderer { sprite_shader: program }
     }
 
-    pub fn render(&self, spr: &SpriteRenderData, sprite: &Sprite, mut frame: &mut Frame) {
+    pub fn render(&self, _spr: &SpriteRenderData, _sprite: &Sprite, mut _frame: &mut Frame) {
         /*
         let translation_matrix: Matrix4<f32> = Matrix4::new(1.0,
                                                             0.0,

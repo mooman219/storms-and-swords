@@ -74,7 +74,7 @@ impl World {
             let paddle_controller = PaddleController::new();
 
             let mut frame_count = 0 as u64;
-
+            return;
             loop {
                 //first we poll for input
                 //then we act on that input
