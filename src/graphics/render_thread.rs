@@ -59,7 +59,14 @@ gfx_defines! {
         vbuf: gfx::VertexBuffer<VertexColor> = (),
         out: gfx::RenderTarget<ColorFormat> = "Target0",
     }
+
+    pipeline pipe_sin {
+        vbuf: gfx::VertexBuffer<VertexColor> = (),
+        sin_num: gfx::Global<i32> = "i_time",
+        out: gfx::RenderTarget<ColorFormat> = "Target0",
+    }
 }
+
 const SQAURE: [VertexColor;3] = [
     VertexColor {pos:[0.5, -0.5], color: WHITE},
     VertexColor {pos:[-0.5, -0.5], color: SHOW_BLACK},
@@ -169,15 +176,23 @@ impl RenderThread {
             .with_title("Square Toy".to_string())
             .with_dimensions(800, 800)
             .with_vsync();
-        
+
         let (window, mut device, mut factory, mut main_color, mut main_depth) =
             gfx_glutin::init::<ColorFormat, DepthFormat>(builder, &events_loop);
         
         let mut encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
+        let mut encoder_for_sin: gfx::Encoder<_, _> = factory.create_command_buffer().into();
+
         let pso = factory.create_pipeline_simple(
             include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/rect_150.glslv")),
             include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/rect_150.glslf")),
             pipe_color::new(),
+        ).unwrap();
+
+        let pso_inverse = factory.create_pipeline_simple(
+            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/rect_inverse_150.glslv")),
+            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/rect_inverse_150.glslf")),
+            pipe_sin::new(),
         ).unwrap();
         
         let (vertex_buffer, slice) = factory.create_vertex_buffer_with_slice(&SQAURE, ());
@@ -193,6 +208,15 @@ impl RenderThread {
             out:main_color.clone()
         };
 
+        
+        let mut sin_value = 0;
+        let mut sin_data = pipe_sin::Data {
+            vbuf: vertex_buffer_other.clone(),
+            sin_num: sin_value.clone(),
+            out: main_color.clone(),
+        };
+        
+
         let mut running = true;
         let mut once = false;
 
@@ -207,29 +231,29 @@ impl RenderThread {
             //the first thing we do is grab the current frame
             let frame_data = self.from_game_thread.try_recv();
             events_loop.poll_events(|glutin::Event::WindowEvent{window_id: _, event}| {
-            use glutin::WindowEvent::*;
-            use glutin::{MouseButton, ElementState, VirtualKeyCode};
-            match event {
-                KeyboardInput(_, _, Some(VirtualKeyCode::Escape), _)
-                | Closed => running = false,
-                Resized(w, h) => {
-                    gfx_glutin::update_views(&window, &mut data.out, &mut main_depth);
-                },
-                _ => (),
-            }
-
+                use glutin::WindowEvent::*;
+                use glutin::{MouseButton, ElementState, VirtualKeyCode};
+                match event {
+                    KeyboardInput(_, _, Some(VirtualKeyCode::Escape), _)
+                    | Closed => running = false,
+                    Resized(w, h) => {
+                        gfx_glutin::update_views(&window, &mut data.out, &mut main_depth);
+                    },
+                    _ => (),
+                }
             });
-         //   data.vbuf = vertex_buffer.clone();
+            
             encoder.clear(&data.out, BLACK);
             encoder.draw(&slice, &pso, &data);
-           // data.vbuf = vertex_buffer_other.clone();
-            encoder.draw(&slice_other, &pso, &other_data);
             encoder.flush(&mut device);
+
+           // encoder_for_sin.clear(&data.out, BLACK);
+            encoder_for_sin.draw(&slice_other, &pso_inverse, &sin_data);
+            sin_data.sin_num = sin_data.sin_num + 1;
+            encoder_for_sin.flush(&mut device);
+
             window.swap_buffers().unwrap();
             device.cleanup();
-
-
-
 
             let frame_duration = frame_start.duration_since(frame_start).unwrap();
             //this is gotten from the rust example page about the Duration struct
