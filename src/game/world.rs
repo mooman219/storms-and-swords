@@ -21,18 +21,18 @@ pub struct World {
     pub to_content_server: Sender<EContentRequestType>,
     pub from_cotent_server: Receiver<EContentRequestResult>,
     pub to_render_thread: Sender<RenderFrame>,
-    pub test : i32,
+    pub test: i32,
     pub input: Input,
     pub left_paddle: Option<PaddleModel>,
    // pub right_paddle: PaddleModel
 }
 
 impl World {
-    pub fn new(to_content_server: Sender<EContentRequestType>,
-               from_cotent_server: Receiver<EContentRequestResult>,
-               to_render_thread: Sender<RenderFrame>)
-              // right_paddle: PaddleModel)
-               -> World {
+    pub fn new(
+        to_content_server: Sender<EContentRequestType>,
+        from_cotent_server: Receiver<EContentRequestResult>,
+        to_render_thread: Sender<RenderFrame>,
+    ) -> World {
 
         World {
             uids: 0 as i64,
@@ -46,37 +46,38 @@ impl World {
         }
     }
 
-    pub fn update(to_content_server: Sender<EContentRequestType>,
-                  from_cotent_server: Receiver<EContentRequestResult>,
-                  to_render_thread: Sender<RenderFrame>) {
+    pub fn update(
+        to_content_server: Sender<EContentRequestType>,
+        from_cotent_server: Receiver<EContentRequestResult>,
+        to_render_thread: Sender<RenderFrame>,
+    ) {
 
-        let mut world : World  = World::new(to_content_server, from_cotent_server, to_render_thread);
-        let content_id_result = world.load_content(EContentRequestType::Image("foo.png".to_string()));
+        let mut world: World = World::new(to_content_server, from_cotent_server, to_render_thread);
+        let content_id_result =
+            world.load_content(EContentRequestType::Image("foo.png".to_string()));
         match content_id_result {
             Ok(content_id) => {
 
                 let paddle_model = PaddleModel::new(world.get_uid(), content_id);
                 world.set_left_paddle(paddle_model);
                 world.inner_update();
-            },
-            Err(e) => {
-
             }
+            Err(e) => {}
         }
-        
+
     }
     pub fn set_left_paddle(&mut self, paddle_model: PaddleModel) {
         self.left_paddle = Some(paddle_model);
     }
 
     pub fn inner_update(mut self) {
-            //the controller for both of the paddles
-            let paddle_controller = PaddleController::new();
+        //the controller for both of the paddles
+        let paddle_controller = PaddleController::new();
 
-            let mut frame_count = 0 as u64;
-            return;
-            loop {
-                //first we poll for input
+        let mut frame_count = 0 as u64;
+        return;
+        loop {
+            //first we poll for input
                 //then we act on that input
                 //then we render what the new state of world is
                 /*
@@ -90,16 +91,16 @@ impl World {
                     }
                 }
 */
-               let paddle = self.left_paddle.as_ref().unwrap();
-               
-               let data = paddle.generate_sprite_render_data().clone();
+            let paddle = self.left_paddle.as_ref().unwrap();
 
-               let mut render_frame = RenderFrame::new(frame_count.clone());
-               render_frame.sprite_renderers.push(data);
-               self.to_render_thread.send(render_frame);
-               
-               frame_count = frame_count + 1;
-            }
+            let data = paddle.generate_sprite_render_data().clone();
+
+            let mut render_frame = RenderFrame::new(frame_count.clone());
+            render_frame.sprite_renderers.push(data);
+            self.to_render_thread.send(render_frame);
+
+            frame_count = frame_count + 1;
+        }
     }
 
     pub fn get_input(&self) -> &Input {
@@ -111,9 +112,10 @@ impl World {
         return self.uids.clone();
     }
 
-    pub fn load_content(&self,
-                        content: EContentRequestType)
-                        -> Result<ContentId, ELoadContentError> {
+    pub fn load_content(
+        &self,
+        content: EContentRequestType,
+    ) -> Result<ContentId, ELoadContentError> {
         let _ = self.to_content_server.send(content);
         let result = self.from_cotent_server.recv();
         match result {

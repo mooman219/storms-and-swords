@@ -109,7 +109,7 @@ impl SpriteRenderer {
                                                       0.0,
                                                       0.0,
                                                       1.0);
-
+ 
         let y_rot_matrix: Matrix4<f32> = Matrix4::new(spr.rotation.y.cos(),
                                                       -spr.rotation.y.sin(),
                                                       0.0,
@@ -168,7 +168,6 @@ impl SpriteRenderer {
             .unwrap();
                 */
     }
-    
 }
 
 /*use graphics::sprite::Sprite;

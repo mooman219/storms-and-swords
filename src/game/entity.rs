@@ -10,7 +10,7 @@ pub trait Entity {
     fn get_scale(&self) -> Vector3<f32>;
     fn get_rotation(&self) -> Vector3<f32>;
     fn get_uid(&self) -> UID;
-    fn update(&self, world: &World) -> Option<Box<Fn (&mut World)>>;
+    fn update(&self, world: &World) -> Option<Box<Fn(&mut World)>>;
 }
 
 /*

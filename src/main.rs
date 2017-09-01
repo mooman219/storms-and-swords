@@ -25,14 +25,15 @@ use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 use std::thread;
 
-use content::load_content::{EContentType, EContentRequestType, EContentRequestResult, EContentLoadRequst};
+use content::load_content::{EContentType, EContentRequestType, EContentRequestResult,
+                            EContentLoadRequst};
 use content::{ContentManifest, LoadContent};
 use graphics::RenderThread;
 use graphics::render_thread::RenderFrame;
 use game::World;
 
 fn main() {
-    
+
     //let PLEASE = glium::glutin::
     //this is for assets that have been loaded by their threads
     //and then for the content manifest to keep track of them
@@ -70,32 +71,38 @@ fn main() {
         mpsc::channel();
 
     let _ = thread::spawn(move || {
-        ContentManifest::thread_loop(content_manifest_asset_receiver,
-                                     content_manifest_request_fulfillment,
-                                     content_manifest_fulfillment.clone())
+        ContentManifest::thread_loop(
+            content_manifest_asset_receiver,
+            content_manifest_request_fulfillment,
+            content_manifest_fulfillment.clone(),
+        )
     });
 
-    
+
     //create a content loader
-    let load_content = LoadContent::new(loading_thread_fulfillment,
-                                            loading_thread_content_id.clone(),
-                                            load_subthread_sender.clone());
+    let load_content = LoadContent::new(
+        loading_thread_fulfillment,
+        loading_thread_content_id.clone(),
+        load_subthread_sender.clone(),
+    );
 
-    let _ = thread::spawn(move || {
-        LoadContent::thread_loop(load_content);
-    });
-    
+    let _ = thread::spawn(move || { LoadContent::thread_loop(load_content); });
+
     //create a render loop
-    
 
-    
+
+
     let _ = thread::spawn(move || {
-        World::update(game_thread_request, 
-                               game_thread_content_id,
-                               game_thread_render_frame.clone());
+        World::update(
+            game_thread_request,
+            game_thread_content_id,
+            game_thread_render_frame.clone(),
+        );
     });
 
-    RenderThread::thread_loop(render_thread_render_frame,
-                                render_thread_asset_request.clone(),
-                                render_thread_asset_reciver);
+    RenderThread::thread_loop(
+        render_thread_render_frame,
+        render_thread_asset_request.clone(),
+        render_thread_asset_reciver,
+    );
 }

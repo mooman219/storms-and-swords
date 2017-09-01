@@ -5,33 +5,44 @@ use game::world::World;
 use game::input::EKeyCode;
 use graphics::{StaticSprite, SpriteRenderData};
 
-pub struct PaddleController {
-
-}
+pub struct PaddleController {}
 
 impl PaddleController {
-    
     pub fn new() -> PaddleController {
-        PaddleController{}
+        PaddleController {}
     }
 
-    pub fn update(&self, world: &World) -> Option<Box<Fn (&mut World)>> {
-            
-            let return_closure = move |inner_world: &mut World| {
-                
-                if inner_world.get_input().get_key_down(EKeyCode::EKeyS) {
+    pub fn update(&self, world: &World) -> Option<Box<Fn(&mut World)>> {
 
-                    let new_pos = inner_world.left_paddle.as_ref().unwrap().get_position().clone() + Vector3::new(0f32, -1.0f32, 0.0f32);
-                    inner_world.left_paddle.as_mut().unwrap().set_position(new_pos);
-                }
+        let return_closure = move |inner_world: &mut World| {
 
-                if inner_world.get_input().get_key_down(EKeyCode::EKeyW) {
-                    let new_pos = inner_world.left_paddle.as_ref().unwrap().get_position().clone() + Vector3::new(0f32, 1.0f32, 0.0f32);
-                    inner_world.left_paddle.as_mut().unwrap().set_position(new_pos);
-                }
-            };
+            if inner_world.get_input().get_key_down(EKeyCode::EKeyS) {
 
-            return Some(Box::new(return_closure));
+                let new_pos = inner_world
+                    .left_paddle
+                    .as_ref()
+                    .unwrap()
+                    .get_position()
+                    .clone() + Vector3::new(0f32, -1.0f32, 0.0f32);
+                inner_world.left_paddle.as_mut().unwrap().set_position(
+                    new_pos,
+                );
+            }
+
+            if inner_world.get_input().get_key_down(EKeyCode::EKeyW) {
+                let new_pos = inner_world
+                    .left_paddle
+                    .as_ref()
+                    .unwrap()
+                    .get_position()
+                    .clone() + Vector3::new(0f32, 1.0f32, 0.0f32);
+                inner_world.left_paddle.as_mut().unwrap().set_position(
+                    new_pos,
+                );
+            }
+        };
+
+        return Some(Box::new(return_closure));
     }
 }
 
@@ -40,18 +51,17 @@ pub struct PaddleModel {
     scale: Vector3<f32>,
     rotation: Vector3<f32>,
     uid: UID,
-    sprite_id: ContentId,   
+    sprite_id: ContentId,
 }
 
-impl PaddleModel  {
-    
-    pub fn new (uid: UID, sprite_id: ContentId) -> PaddleModel {
+impl PaddleModel {
+    pub fn new(uid: UID, sprite_id: ContentId) -> PaddleModel {
         PaddleModel {
             position: Vector3::new(0.0f32, 0.0f32, 0.0f32),
             scale: Vector3::new(1.0f32, 1.0f32, 1.0f32),
             rotation: Vector3::new(0.0f32, 0.0f32, 0.0f32),
             uid: uid,
-            sprite_id: sprite_id
+            sprite_id: sprite_id,
         }
     }
 
@@ -78,16 +88,15 @@ impl PaddleModel  {
     pub fn get_rotation(&self) -> Vector3<f32> {
         self.rotation
     }
-
 }
 
 impl StaticSprite for PaddleModel {
-   fn generate_sprite_render_data(&self) -> SpriteRenderData {
+    fn generate_sprite_render_data(&self) -> SpriteRenderData {
         SpriteRenderData {
             pos: self.position.clone(),
             scale: self.scale.clone(),
             rotation: self.rotation.clone(),
-            sprite: self.sprite_id.clone()
+            sprite: self.sprite_id.clone(),
         }
     }
 }

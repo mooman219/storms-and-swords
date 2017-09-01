@@ -28,10 +28,10 @@ gfx_defines!{
 }
 
 impl Vertex {
-    fn new(p:[i8; 3], t: [i8;2]) -> Vertex {
+    fn new(p: [i8; 3], t: [i8; 2]) -> Vertex {
         Vertex {
             pos: [p[0] as f32, p[1] as f32, p[2] as f32, 1.0],
-            tex_coord:[t[0] as f32, t[1] as f32]
+            tex_coord: [t[0] as f32, t[1] as f32],
         }
     }
 }

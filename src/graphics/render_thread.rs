@@ -42,9 +42,9 @@ use graphics::vertex::{pipe, Vertex};
 
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 const SHOW_BLACK: [f32; 3] = [0.0, 0.0, 0.0];
-const RED:   [f32; 3] = [1.0, 0.0, 0.0];
-const GREEN: [f32;3] = [0.0, 1.0, 0.0];
-const BLUE: [f32;3] = [0.0, 0.0, 1.0];
+const RED: [f32; 3] = [1.0, 0.0, 0.0];
+const GREEN: [f32; 3] = [0.0, 1.0, 0.0];
+const BLUE: [f32; 3] = [0.0, 0.0, 1.0];
 const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
 
 const ONE_FRAME_IN_MILLIE: u64 = 1000 / 60;
@@ -60,23 +60,46 @@ gfx_defines! {
         out: gfx::RenderTarget<ColorFormat> = "Target0",
     }
 
+    constant Transform {
+        transform: [[f32; 4];4] = "u_Transform",
+    }
+
     pipeline pipe_sin {
         vbuf: gfx::VertexBuffer<VertexColor> = (),
+        transform: gfx::ConstantBuffer<Transform> = "Transform",
         sin_num: gfx::Global<i32> = "i_time",
         out: gfx::RenderTarget<ColorFormat> = "Target0",
     }
 }
 
-const SQAURE: [VertexColor;3] = [
-    VertexColor {pos:[0.5, -0.5], color: WHITE},
-    VertexColor {pos:[-0.5, -0.5], color: SHOW_BLACK},
-    VertexColor {pos:[-0.5, 0.5], color: WHITE},
+const SQAURE: [VertexColor; 3] = [
+    VertexColor {
+        pos: [0.5, -0.5],
+        color: WHITE,
+    },
+    VertexColor {
+        pos: [-0.5, -0.5],
+        color: SHOW_BLACK,
+    },
+    VertexColor {
+        pos: [-0.5, 0.5],
+        color: WHITE,
+    },
 ];
 
-const OTHER_SQAURE: [VertexColor;3] = [
-    VertexColor {pos:[0.0, -0.5], color: RED},
-    VertexColor {pos:[-1.0, -0.5], color: GREEN},
-    VertexColor {pos:[-1.0, 0.5], color: BLUE},
+const OTHER_SQAURE: [VertexColor; 3] = [
+    VertexColor {
+        pos: [0.0, -0.5],
+        color: RED,
+    },
+    VertexColor {
+        pos: [-1.0, -0.5],
+        color: GREEN,
+    },
+    VertexColor {
+        pos: [-1.0, 0.5],
+        color: BLUE,
+    },
 ];
 
 #[derive(Clone)]
@@ -87,9 +110,9 @@ pub struct RenderFrame {
 
 impl RenderFrame {
     pub fn new(frame_index: u64) -> RenderFrame {
-        RenderFrame{
+        RenderFrame {
             sprite_renderers: vec![],
-            frame_index: frame_index
+            frame_index: frame_index,
         }
     }
 }
@@ -99,36 +122,38 @@ pub struct RenderThread {
     to_content_manifest: Sender<EContentLoadRequst>,
     from_content_manifest: Receiver<EContentType>,
     _current_frame_index: u64,
- //   sprite_renderer: SpriteRenderer,
-    sprites: HashMap<ContentId, Sprite>
+    //   sprite_renderer: SpriteRenderer,
+    sprites: HashMap<ContentId, Sprite>,
 }
 
 impl RenderThread {
-    pub fn new(from_game_thread: Receiver<RenderFrame>,
-               to_content_manifest: Sender<EContentLoadRequst>,
-               from_content_manifest: Receiver<EContentType>)
-               -> RenderThread {
+    pub fn new(
+        from_game_thread: Receiver<RenderFrame>,
+        to_content_manifest: Sender<EContentLoadRequst>,
+        from_content_manifest: Receiver<EContentType>,
+    ) -> RenderThread {
 
-      //  let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
+        //  let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
         //let sprite_renderer = SpriteRenderer::new(&display);
 
         RenderThread {
-      //      display: display,
+            //      display: display,
             _current_frame_index: 0,
-        //    sprite_renderer: sprite_renderer,
+            //    sprite_renderer: sprite_renderer,
             from_game_thread: from_game_thread,
             to_content_manifest: to_content_manifest,
             from_content_manifest: from_content_manifest,
-            sprites: HashMap::new()
+            sprites: HashMap::new(),
         }
     }
 
     pub fn query_content_manifest_for_sprite(&mut self, content_id: ContentId) -> bool {
         if self.sprites.contains_key(&content_id) {
-           true
-        }
-        else {
-            let _ = self.to_content_manifest.send(EContentLoadRequst::Image(content_id));
+            true
+        } else {
+            let _ = self.to_content_manifest.send(EContentLoadRequst::Image(
+                content_id,
+            ));
             let value = self.from_content_manifest.recv().unwrap();
             match value {
                 EContentType::Image(id, dy_image) => {
@@ -141,10 +166,8 @@ impl RenderThread {
                     */
 
                     true
-                },
-                EContentType::NotLoaded => {
-                    false
                 }
+                EContentType::NotLoaded => false,
             }
         }
 
@@ -157,21 +180,24 @@ impl RenderThread {
         None
     }
 
-    pub fn thread_loop(from_game_thread: Receiver<RenderFrame>,
-                       to_content_manifest: Sender<EContentLoadRequst>,
-                       from_content_manifest: Receiver<EContentType>) {
-        
+    pub fn thread_loop(
+        from_game_thread: Receiver<RenderFrame>,
+        to_content_manifest: Sender<EContentLoadRequst>,
+        from_content_manifest: Receiver<EContentType>,
+    ) {
 
-        let mut rend = RenderThread::new(from_game_thread, to_content_manifest, from_content_manifest);
+
+        let mut rend =
+            RenderThread::new(from_game_thread, to_content_manifest, from_content_manifest);
 
         rend.render();
     }
-    
-    
+
+
     pub fn render(&mut self) {
         let TOTAL_FRAME_DURATION = Duration::from_millis(16);
         let events_loop = glutin::EventsLoop::new();
-        
+
         let builder = glutin::WindowBuilder::new()
             .with_title("Square Toy".to_string())
             .with_dimensions(800, 800)
@@ -179,43 +205,72 @@ impl RenderThread {
 
         let (window, mut device, mut factory, mut main_color, mut main_depth) =
             gfx_glutin::init::<ColorFormat, DepthFormat>(builder, &events_loop);
-        
+
         let mut encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
         let mut encoder_for_sin: gfx::Encoder<_, _> = factory.create_command_buffer().into();
 
-        let pso = factory.create_pipeline_simple(
-            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/rect_150.glslv")),
-            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/rect_150.glslf")),
-            pipe_color::new(),
-        ).unwrap();
+        let pso = factory
+            .create_pipeline_simple(
+                include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/shaders/rect_150.glslv"
+                )),
+                include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/shaders/rect_150.glslf"
+                )),
+                pipe_color::new(),
+            )
+            .unwrap();
 
-        let pso_inverse = factory.create_pipeline_simple(
-            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/rect_inverse_150.glslv")),
-            include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/shaders/rect_inverse_150.glslf")),
-            pipe_sin::new(),
-        ).unwrap();
-        
+        let pso_inverse = factory
+            .create_pipeline_simple(
+                include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/shaders/rect_inverse_150.glslv"
+                )),
+                include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/shaders/rect_inverse_150.glslf"
+                )),
+                pipe_sin::new(),
+            )
+            .unwrap();
+
         let (vertex_buffer, slice) = factory.create_vertex_buffer_with_slice(&SQAURE, ());
-        let (vertex_buffer_other, slice_other) = factory.create_vertex_buffer_with_slice(&OTHER_SQAURE, ());
+        let (vertex_buffer_other, slice_other) =
+            factory.create_vertex_buffer_with_slice(&OTHER_SQAURE, ());
+
+
+        let mut TRANSFORM: Transform = Transform {
+            transform: [[1.0, 0.0, 0.0, 0.0],
+                        [0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0]]
+            };
+
 
         let mut data = pipe_color::Data {
             vbuf: vertex_buffer.clone(),
-            out: main_color.clone()
+            out: main_color.clone(),
         };
 
         let mut other_data = pipe_color::Data {
             vbuf: vertex_buffer_other.clone(),
-            out:main_color.clone()
+            out: main_color.clone(),
         };
 
-        
+
         let mut sin_value = 0;
+        let transform_buffer = factory.create_constant_buffer(1);
         let mut sin_data = pipe_sin::Data {
             vbuf: vertex_buffer_other.clone(),
+            transform: transform_buffer,
             sin_num: sin_value.clone(),
             out: main_color.clone(),
         };
-        
+
+        encoder_for_sin.update_buffer(&sin_data.transform, &[TRANSFORM], 0);
 
         let mut running = true;
         let mut once = false;
@@ -230,26 +285,34 @@ impl RenderThread {
             }
             //the first thing we do is grab the current frame
             let frame_data = self.from_game_thread.try_recv();
-            events_loop.poll_events(|glutin::Event::WindowEvent{window_id: _, event}| {
+            events_loop.poll_events(|glutin::Event::WindowEvent {
+                 window_id: _,
+                 event,
+             }| {
                 use glutin::WindowEvent::*;
                 use glutin::{MouseButton, ElementState, VirtualKeyCode};
                 match event {
-                    KeyboardInput(_, _, Some(VirtualKeyCode::Escape), _)
-                    | Closed => running = false,
+                    KeyboardInput(_, _, Some(VirtualKeyCode::Escape), _) |
+                    Closed => running = false,
                     Resized(w, h) => {
                         gfx_glutin::update_views(&window, &mut data.out, &mut main_depth);
-                    },
+                    }
                     _ => (),
                 }
             });
-            
+
             encoder.clear(&data.out, BLACK);
             encoder.draw(&slice, &pso, &data);
             encoder.flush(&mut device);
 
-           // encoder_for_sin.clear(&data.out, BLACK);
+            // encoder_for_sin.clear(&data.out, BLACK);
             encoder_for_sin.draw(&slice_other, &pso_inverse, &sin_data);
             sin_data.sin_num = sin_data.sin_num + 1;
+            TRANSFORM.transform[3][0] = TRANSFORM.transform[3][0] + 0.04f32;
+            if TRANSFORM.transform[3][0] > 1f32 {
+                TRANSFORM.transform[3][0] = -1f32;
+            }
+            encoder_for_sin.update_buffer(&sin_data.transform, &[TRANSFORM], 0);
             encoder_for_sin.flush(&mut device);
 
             window.swap_buffers().unwrap();

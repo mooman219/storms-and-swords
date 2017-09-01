@@ -12,7 +12,8 @@ pub struct Sprite {
 }
 
 impl Sprite {
-    pub fn new(_image_name: String, texture: Texture2d, display: &GlutinFacade) {//-> Sprite {
+    pub fn new(_image_name: String, texture: Texture2d, display: &GlutinFacade) {
+        //-> Sprite {
 /*
         let bl = Vertex {
             pos: [-0.5, 0.5],
@@ -45,7 +46,7 @@ impl Sprite {
             vertex_buffer: vertex_buffer,
             index_buffer: index_buffer,
         }
-     */   
+     */
     }
 
     pub fn get_texture(&self) -> &Texture2d {
