@@ -238,7 +238,7 @@ impl Component for SpriteComponent {
     fn to_box(self) -> Box<Component> {
         Box::new(self)
     }
-    
+     
 }
 
 impl Renderable for SpriteComponent {

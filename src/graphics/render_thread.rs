@@ -62,12 +62,13 @@ gfx_defines! {
 
     constant Transform {
         transform: [[f32; 4];4] = "u_Transform",
+        scale: [[f32;4]; 4] = "u_Scale",
+        rotation: [[f32;4]; 4] = "u_Rotation",
     }
 
     pipeline pipe_sin {
         vbuf: gfx::VertexBuffer<VertexColor> = (),
         transform: gfx::ConstantBuffer<Transform> = "Transform",
-        sin_num: gfx::Global<i32> = "i_time",
         out: gfx::RenderTarget<ColorFormat> = "Target0",
     }
 }
@@ -101,6 +102,26 @@ const OTHER_SQAURE: [VertexColor; 3] = [
         color: BLUE,
     },
 ];
+
+const BOX: [VertexColor; 4] = [
+    VertexColor {
+        pos: [0.0, 0.0],
+        color: WHITE,
+    },
+    VertexColor {
+        pos: [1.0, 0.0],
+        color: WHITE,
+    },
+    VertexColor { 
+        pos: [0.0, 1.0],
+        color: WHITE,
+    },
+    VertexColor {
+        pos: [1.0, 1.0],
+        color: RED,
+    }
+];
+
 
 #[derive(Clone)]
 pub struct RenderFrame {
@@ -206,7 +227,7 @@ impl RenderThread {
         let (window, mut device, mut factory, mut main_color, mut main_depth) =
             gfx_glutin::init::<ColorFormat, DepthFormat>(builder, &events_loop);
 
-        let mut encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
+      //  let mut encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
         let mut encoder_for_sin: gfx::Encoder<_, _> = factory.create_command_buffer().into();
 
         let pso = factory
@@ -242,15 +263,55 @@ impl RenderThread {
             factory.create_vertex_buffer_with_slice(&OTHER_SQAURE, ());
 
 
+        let BOX_INDEX: Vec<u16> = vec![0u16, 1, 2, 2, 1, 3];
+
+        let (box_vertex_buffer, box_index_buffer) = factory.create_vertex_buffer_with_slice(&BOX, &*BOX_INDEX);
+
+        /*
+        let x_rot_matrix : Matrix4<f32> = Matrix4::new(
+            1.0, 0.0, 0.0, 0.0,
+            0.0,  rotation.x.cos(), -rotation.x.sin(), 0.0,
+            0.0,  rotation.x.sin(),  rotation.x.cos(), 0.0,
+            0.0, 0.0, 0.0, 1.0
+        );
+
+        let y_rot_matrix : Matrix4<f32> = Matrix4::new(
+            rotation.y.cos(), -rotation.y.sin(), 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0, 
+            -rotation.y.sin(), 0.0, rotation.x.cos(), 0.0,
+            0.0, 0.0, 0.0, 1.0
+        );
+        
+        let z_rot_matrix : Matrix4<f32> = Matrix4::new(
+            rotation.z.cos(), -rotation.z.sin(), 0.0, 0.0,
+            rotation.z.sin(), rotation.z.cos(),  0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        );
+        */
+
+
         let mut TRANSFORM: Transform = Transform {
             transform: [[1.0, 0.0, 0.0, 0.0],
                         [0.0, 1.0, 0.0, 0.0],
                         [0.0, 0.0, 1.0, 0.0],
-                        [0.0, 0.0, 0.0, 1.0]]
+                        [-1.0, 0.0, 0.0, 1.0]],
+
+            scale:     [[1.0, 0.0, 0.0, 0.0],
+                        [0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0]],
+
+            rotation:  [[1.0, 0.0, 0.0, 0.0],
+                        [0.0, f32::cos(1.0), -f32::sin(0.0), 0.0],
+                        [0.0, f32::sin(0.0), f32::cos(1.0), 0.0],
+                        [0.0, 0.0, 0.0, 1.0]],
+                        
             };
+        //let test = TRANSFORM.transform * TRANSFORM.scale;
 
 
-        let mut data = pipe_color::Data {
+        let mut box_data = pipe_color::Data {
             vbuf: vertex_buffer.clone(),
             out: main_color.clone(),
         };
@@ -260,17 +321,24 @@ impl RenderThread {
             out: main_color.clone(),
         };
 
-
+    /*
         let mut sin_value = 0;
-        let transform_buffer = factory.create_constant_buffer(1);
         let mut sin_data = pipe_sin::Data {
             vbuf: vertex_buffer_other.clone(),
             transform: transform_buffer,
             sin_num: sin_value.clone(),
             out: main_color.clone(),
         };
+*/
+        
+        let transform_buffer = factory.create_constant_buffer(1);
+        let mut data = pipe_sin::Data {
+            vbuf: box_vertex_buffer.clone(),
+            transform: transform_buffer,
+            out: main_color.clone()
+        };
 
-        encoder_for_sin.update_buffer(&sin_data.transform, &[TRANSFORM], 0);
+        encoder_for_sin.update_buffer(&data.transform, &[TRANSFORM], 0);
 
         let mut running = true;
         let mut once = false;
@@ -301,18 +369,22 @@ impl RenderThread {
                 }
             });
 
-            encoder.clear(&data.out, BLACK);
-            encoder.draw(&slice, &pso, &data);
-            encoder.flush(&mut device);
+       //     encoder.clear(&data.out, BLACK);
+         //  encoder.draw(&slice, &pso, &data);
+         //   encoder.flush(&mut device);
 
-            // encoder_for_sin.clear(&data.out, BLACK);
-            encoder_for_sin.draw(&slice_other, &pso_inverse, &sin_data);
+             encoder_for_sin.clear(&data.out, BLACK);
+             encoder_for_sin.draw(&box_index_buffer, &pso_inverse, &data);
+       
+     //       encoder_for_sin.draw(&slice_other, &pso_inverse, &sin_data);
+     /*
             sin_data.sin_num = sin_data.sin_num + 1;
             TRANSFORM.transform[3][0] = TRANSFORM.transform[3][0] + 0.04f32;
             if TRANSFORM.transform[3][0] > 1f32 {
                 TRANSFORM.transform[3][0] = -1f32;
             }
-            encoder_for_sin.update_buffer(&sin_data.transform, &[TRANSFORM], 0);
+            */
+        //    encoder_for_sin.update_buffer(&sin_data.transform, &[TRANSFORM], 0);
             encoder_for_sin.flush(&mut device);
 
             window.swap_buffers().unwrap();
