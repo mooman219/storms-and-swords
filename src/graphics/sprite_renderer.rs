@@ -4,8 +4,6 @@ use glium::{self, Frame};
 use glium::{Display, Surface};
 use cgmath::Matrix4;
 use graphics::sprite::Sprite;
-
-
 /*
 *    Each character in game that wants to be rendered must present one of these perframe that it wants to be rendered
 */

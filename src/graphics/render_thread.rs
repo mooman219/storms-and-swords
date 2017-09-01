@@ -4,6 +4,25 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::time::{SystemTime, Duration};
 use std::thread::sleep;
 
+use std::ops::Mul;
+
+/*
+type Matrix = [[f32; 4]; 4];
+
+impl Mul for Matrix {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self {
+
+        for x in 0..4 {
+            for y in 0..4 {
+
+            }
+        }
+
+    }
+}
+*/
+
 /*
 use std::time::Duration;
 
@@ -61,9 +80,9 @@ gfx_defines! {
     }
 
     constant Transform {
-        transform: [[f32; 4];4] = "u_Transform",
-        scale: [[f32;4]; 4] = "u_Scale",
-        rotation: [[f32;4]; 4] = "u_Rotation",
+        transform:  [[f32;4]; 4] = "u_Transform",
+        scale:      [[f32;4]; 4] = "u_Scale",
+        rotation_z: [[f32;4]; 4] = "u_Rotation_z",
     }
 
     pipeline pipe_sin {
@@ -105,19 +124,19 @@ const OTHER_SQAURE: [VertexColor; 3] = [
 
 const BOX: [VertexColor; 4] = [
     VertexColor {
-        pos: [0.0, 0.0],
-        color: WHITE,
+        pos: [-0.5, -0.5],
+        color: GREEN,
     },
     VertexColor {
-        pos: [1.0, 0.0],
-        color: WHITE,
+        pos: [0.5, -0.5],
+        color: BLUE,
     },
     VertexColor { 
-        pos: [0.0, 1.0],
-        color: WHITE,
+        pos: [-0.5, 0.5],
+        color: SHOW_BLACK,
     },
     VertexColor {
-        pos: [1.0, 1.0],
+        pos: [0.5, 0.5],
         color: RED,
     }
 ];
@@ -216,7 +235,7 @@ impl RenderThread {
 
 
     pub fn render(&mut self) {
-        let TOTAL_FRAME_DURATION = Duration::from_millis(16);
+        let TOTAL_FRAME_DURATION = Duration::from_millis(8);
         let events_loop = glutin::EventsLoop::new();
 
         let builder = glutin::WindowBuilder::new()
@@ -295,20 +314,18 @@ impl RenderThread {
             transform: [[1.0, 0.0, 0.0, 0.0],
                         [0.0, 1.0, 0.0, 0.0],
                         [0.0, 0.0, 1.0, 0.0],
-                        [-1.0, 0.0, 0.0, 1.0]],
+                        [0.3, 0.2, 0.0, 1.0]],
 
             scale:     [[1.0, 0.0, 0.0, 0.0],
                         [0.0, 1.0, 0.0, 0.0],
                         [0.0, 0.0, 1.0, 0.0],
                         [0.0, 0.0, 0.0, 1.0]],
 
-            rotation:  [[1.0, 0.0, 0.0, 0.0],
-                        [0.0, f32::cos(1.0), -f32::sin(0.0), 0.0],
-                        [0.0, f32::sin(0.0), f32::cos(1.0), 0.0],
-                        [0.0, 0.0, 0.0, 1.0]],
-                        
+            rotation_z:[[f32::cos(45.0), f32::sin(45.0), 0.0, 0.0],
+                        [-f32::sin(45.0), f32::cos(45.0), 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0]],            
             };
-        //let test = TRANSFORM.transform * TRANSFORM.scale;
 
 
         let mut box_data = pipe_color::Data {
@@ -342,11 +359,12 @@ impl RenderThread {
 
         let mut running = true;
         let mut once = false;
-
+        let mut angle: f32 = 0f32;
         let mut frame_start;
 
 
         while running {
+            
             frame_start = SystemTime::now();
             if once {
                 continue;
@@ -377,14 +395,17 @@ impl RenderThread {
              encoder_for_sin.draw(&box_index_buffer, &pso_inverse, &data);
        
      //       encoder_for_sin.draw(&slice_other, &pso_inverse, &sin_data);
-     /*
-            sin_data.sin_num = sin_data.sin_num + 1;
-            TRANSFORM.transform[3][0] = TRANSFORM.transform[3][0] + 0.04f32;
-            if TRANSFORM.transform[3][0] > 1f32 {
-                TRANSFORM.transform[3][0] = -1f32;
-            }
-            */
-        //    encoder_for_sin.update_buffer(&sin_data.transform, &[TRANSFORM], 0);
+     
+     //       sin_data.sin_num = sin_data.sin_num + 1;
+            TRANSFORM.rotation_z[0][0] = f32::cos(angle);
+            TRANSFORM.rotation_z[0][1] = f32::sin(angle);
+            TRANSFORM.rotation_z[1][0] = -f32::sin(angle);
+            TRANSFORM.rotation_z[1][1] = f32::cos(angle);
+            angle = angle + 0.1f32;
+            
+            
+            encoder_for_sin.update_buffer(&data.transform, &[TRANSFORM], 0);
+
             encoder_for_sin.flush(&mut device);
 
             window.swap_buffers().unwrap();
