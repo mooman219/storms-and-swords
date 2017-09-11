@@ -1,8 +1,7 @@
+/*
 #[macro_use]
 use gfx;
-use gfx::traits::FactoryExt;
 use gfx::Device;
-extern crate gfx_app;
 
 use graphics::{ColorFormat, DepthFormat};
 
@@ -35,3 +34,4 @@ impl Vertex {
         }
     }
 }
+*/

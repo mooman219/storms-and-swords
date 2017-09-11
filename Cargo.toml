@@ -4,11 +4,10 @@ version = "0.1.0"
 authors = ["tucker, mooman219"]
 
 [dependencies]
-gfx = "*"
-gfx_app = "*"
-image = "0.13.0"
-glutin = "*"
-glium = "0.16.0"
-gfx_window_glutin = "*"
-cgmath = "0.12.0"
-threadpool = "1.3.2"
+gfx = { path = "../gfx/src/render" }
+gfx_window_glutin = { path = "../gfx/src/window/glutin" }
+gfx_device_gl = { path = "../gfx/src/backend/gl"}
+image = "*"
+glutin = "0.9"
+cgmath = "*"
+threadpool = "*"

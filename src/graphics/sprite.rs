@@ -1,3 +1,4 @@
+/*
 use glium::texture::Texture2d;
 use glium;
 use glium::backend::glutin_backend::GlutinFacade;
@@ -61,3 +62,4 @@ impl Sprite {
         &self.index_buffer
     }
 }
+*/

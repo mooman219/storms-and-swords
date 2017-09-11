@@ -1,14 +1,19 @@
+use std::boxed::Box;
+use std::collections::HashMap;
+use std::time::{SystemTime, Duration};
+use std::thread::sleep;
+
 use game::ContentId;
 use game::entity::{Entity, UID};
 use std::sync::mpsc::{Receiver, Sender};
 use content::load_content::{EContentRequestType, EContentRequestResult};
 use graphics::render_thread::RenderFrame;
-use graphics::static_sprite_trait::StaticSprite;
-use std::boxed::Box;
-use std::collections::HashMap;
+use glutin::VirtualKeyCode;
 use game::Input;
 use game::paddle::{PaddleModel, PaddleController};
 
+
+use frame_timer::FrameTimer;
 
 #[derive(PartialEq, Eq)]
 pub enum ELoadContentError {
@@ -21,6 +26,7 @@ pub struct World {
     pub to_content_server: Sender<EContentRequestType>,
     pub from_cotent_server: Receiver<EContentRequestResult>,
     pub to_render_thread: Sender<RenderFrame>,
+    pub from_render_thread_for_input: Receiver<VirtualKeyCode>,
     pub test: i32,
     pub input: Input,
     pub left_paddle: Option<PaddleModel>,
@@ -32,6 +38,7 @@ impl World {
         to_content_server: Sender<EContentRequestType>,
         from_cotent_server: Receiver<EContentRequestResult>,
         to_render_thread: Sender<RenderFrame>,
+        from_render_thread_for_input: Receiver<VirtualKeyCode>,
     ) -> World {
 
         World {
@@ -39,6 +46,7 @@ impl World {
             to_content_server: to_content_server,
             from_cotent_server: from_cotent_server,
             to_render_thread: to_render_thread,
+            from_render_thread_for_input: from_render_thread_for_input,
             test: 0 as i32,
             input: Input::new(),
             left_paddle: None,
@@ -50,9 +58,15 @@ impl World {
         to_content_server: Sender<EContentRequestType>,
         from_cotent_server: Receiver<EContentRequestResult>,
         to_render_thread: Sender<RenderFrame>,
+        from_render_thread_input: Receiver<VirtualKeyCode>,
     ) {
 
-        let mut world: World = World::new(to_content_server, from_cotent_server, to_render_thread);
+        let mut world: World = World::new(
+            to_content_server,
+            from_cotent_server,
+            to_render_thread,
+            from_render_thread_input,
+        );
         let content_id_result =
             world.load_content(EContentRequestType::Image("foo.png".to_string()));
         match content_id_result {
@@ -71,12 +85,24 @@ impl World {
     }
 
     pub fn inner_update(mut self) {
+        let mut frame_timer = FrameTimer::new();
+
         //the controller for both of the paddles
         let paddle_controller = PaddleController::new();
 
         let mut frame_count = 0 as u64;
-        return;
+
         loop {
+
+            frame_timer.frame_start();
+
+            let input_check = self.from_render_thread_for_input.try_recv();
+            match input_check {
+                Ok(_input_event) => {}
+                Err(e) => {}
+            }
+
+
             //first we poll for input
                 //then we act on that input
                 //then we render what the new state of world is
@@ -91,6 +117,7 @@ impl World {
                     }
                 }
 */
+            /*
             let paddle = self.left_paddle.as_ref().unwrap();
 
             let data = paddle.generate_sprite_render_data().clone();
@@ -100,6 +127,8 @@ impl World {
             self.to_render_thread.send(render_frame);
 
             frame_count = frame_count + 1;
+            */
+            frame_timer.frame_end();
         }
     }
 

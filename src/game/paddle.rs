@@ -3,7 +3,6 @@ use cgmath::Vector3;
 use game::ContentId;
 use game::world::World;
 use game::input::EKeyCode;
-use graphics::{StaticSprite, SpriteRenderData};
 
 pub struct PaddleController {}
 
@@ -87,16 +86,5 @@ impl PaddleModel {
 
     pub fn get_rotation(&self) -> Vector3<f32> {
         self.rotation
-    }
-}
-
-impl StaticSprite for PaddleModel {
-    fn generate_sprite_render_data(&self) -> SpriteRenderData {
-        SpriteRenderData {
-            pos: self.position.clone(),
-            scale: self.scale.clone(),
-            rotation: self.rotation.clone(),
-            sprite: self.sprite_id.clone(),
-        }
     }
 }

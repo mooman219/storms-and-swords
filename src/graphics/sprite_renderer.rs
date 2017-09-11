@@ -1,7 +1,7 @@
+/*
+
 use cgmath::Vector3;
 use game::ContentId;
-use glium::{self, Frame};
-use glium::{Display, Surface};
 use cgmath::Matrix4;
 use graphics::sprite::Sprite;
 /*
@@ -329,4 +329,5 @@ impl Renderable for SpriteComponent {
     }
 }
 
+*/
 */

@@ -3,9 +3,9 @@
 #[macro_use]
 extern crate gfx;
 extern crate gfx_window_glutin;
-extern crate gfx_app;
 extern crate glutin;
-extern crate glium;
+extern crate gfx_device_gl;
+
 extern crate image;
 extern crate cgmath;
 //extern crate test;
@@ -20,6 +20,7 @@ pub mod graphics;
 pub mod math;
 pub mod physics;
 pub mod content;
+pub mod frame_timer;
 
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
@@ -70,6 +71,11 @@ fn main() {
                                                                  Receiver<RenderFrame>) =
         mpsc::channel();
 
+    let (game_input_thread, game_thread_gets_input): (Sender<glutin::VirtualKeyCode>,
+                                                      Receiver<glutin::VirtualKeyCode>) =
+        mpsc::channel();
+
+
     let _ = thread::spawn(move || {
         ContentManifest::thread_loop(
             content_manifest_asset_receiver,
@@ -97,6 +103,7 @@ fn main() {
             game_thread_request,
             game_thread_content_id,
             game_thread_render_frame.clone(),
+            game_thread_gets_input,
         );
     });
 
@@ -104,5 +111,6 @@ fn main() {
         render_thread_render_frame,
         render_thread_asset_request.clone(),
         render_thread_asset_reciver,
+        game_input_thread,
     );
 }
