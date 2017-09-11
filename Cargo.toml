@@ -4,9 +4,9 @@ version = "0.1.0"
 authors = ["tucker, mooman219"]
 
 [dependencies]
-gfx = { path = "../gfx/src/render" }
-gfx_window_glutin = { path = "../gfx/src/window/glutin" }
-gfx_device_gl = { path = "../gfx/src/backend/gl"}
+gfx = { path = "./gfx/src/render" }
+gfx_window_glutin = { path = "./gfx/src/window/glutin" }
+gfx_device_gl = { path = "./gfx/src/backend/gl"}
 image = "*"
 glutin = "0.9"
 cgmath = "*"
