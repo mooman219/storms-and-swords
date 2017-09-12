@@ -9,7 +9,6 @@ use gfx::traits::DeviceExt;
 use graphics::render_thread::RenderPackage;
 type ColorFormat = gfx::format::Rgba8;
 
-const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 gfx_defines!{
     vertex SphereVertex {
         pos: [f32;2] = "a_Pos",
@@ -19,10 +18,11 @@ gfx_defines!{
 
     pipeline SpherePipeLine {
         vbuf: gfx::VertexBuffer<SphereVertex> = (),
-        out: gfx::RenderTarget<ColorFormat> = "Target0",
+        out: gfx::BlendTarget<ColorFormat> = ("Target0", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
     }
 }
 
+#[derive(Clone)]
 pub struct SphereRenderData {
     pub pos: Vector2<f32>,
     pub scale: f32,
@@ -31,11 +31,12 @@ pub struct SphereRenderData {
 
 pub struct SphereRenderer {
     pso: gfx::PipelineState<Resources, SpherePipeLine::Meta>,
+    graphics_pool: gfx::GraphicsCommandPool<gfx_device_gl::Backend>,
 }
 
 impl SphereRenderer {
     
-    pub fn new(device: &mut gfx_device_gl::Device) -> SphereRenderer {
+    pub fn new(device: &mut gfx_device_gl::Device, graphics_pool: gfx::GraphicsCommandPool<gfx_device_gl::Backend>) -> SphereRenderer {
 
         let pso = device.create_pipeline_simple(
             include_bytes!(concat!(
@@ -50,18 +51,17 @@ impl SphereRenderer {
         ).unwrap();
 
         SphereRenderer {
-            pso
+            pso,
+            graphics_pool
         }
         
     }
 
-    pub fn render_boxes(&mut self, boxes_to_render: Vec<SphereRenderData>, render_package: &mut RenderPackage, view: &gfx::handle::RenderTargetView<gfx_device_gl::Resources, (gfx::format::R8_G8_B8_A8, gfx::format::Unorm)>,) {
+    pub fn render_spheres(&mut self, boxes_to_render: &Vec<SphereRenderData>, render_package: &mut RenderPackage, view: &gfx::handle::RenderTargetView<gfx_device_gl::Resources, (gfx::format::R8_G8_B8_A8, gfx::format::Unorm)>,) {
         
         let mut vertex_info = vec![];
         let mut index_info : Vec<u16> = vec![];
 
-        let mut graphics_pool = render_package.graphics_queue.create_graphics_pool(1);
-        let mut sphere_encoder = graphics_pool.acquire_graphics_encoder();
 
         for box_to_render in boxes_to_render.iter() {
             vertex_info.extend(&[
@@ -86,8 +86,13 @@ impl SphereRenderer {
             out: view.clone(),
         };
 
-        sphere_encoder.clear(&box_data.out, BLACK);
-        sphere_encoder.draw(&index_buffer, &self.pso, &box_data);
-        let _ = sphere_encoder.synced_flush(render_package.graphics_queue, &[&render_package.frame_semaphore], &[&render_package.draw_semaphore], Some(&render_package.frame_fence)).expect("could not flush encoder");
+        {
+            let mut sphere_encoder = self.graphics_pool.acquire_graphics_encoder();
+        //    sphere_encoder.clear(&box_data.out, BLACK);
+            sphere_encoder.draw(&index_buffer, &self.pso, &box_data);
+            let _ = sphere_encoder.synced_flush(render_package.graphics_queue, &[&render_package.frame_semaphore.clone()], &[&render_package.draw_semaphore.clone()], Some(&render_package.frame_fence.clone())).expect("could not flush encoder");
+        }
+
+        self.graphics_pool.reset();
     }
 }

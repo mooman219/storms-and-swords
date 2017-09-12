@@ -3,9 +3,11 @@ use std::collections::HashMap;
 use std::time::{SystemTime, Duration};
 use std::thread::sleep;
 
+use cgmath::Vector3;
+
 use game::ContentId;
 use game::entity::{Entity, UID};
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{Receiver, Sender, SyncSender};
 use content::load_content::{EContentRequestType, EContentRequestResult};
 use graphics::render_thread::RenderFrame;
 use glutin::VirtualKeyCode;
@@ -25,19 +27,19 @@ pub struct World {
     pub uids: UID,
     pub to_content_server: Sender<EContentRequestType>,
     pub from_cotent_server: Receiver<EContentRequestResult>,
-    pub to_render_thread: Sender<RenderFrame>,
+    pub to_render_thread: SyncSender<RenderFrame>,
     pub from_render_thread_for_input: Receiver<VirtualKeyCode>,
     pub test: i32,
     pub input: Input,
     pub left_paddle: Option<PaddleModel>,
-   // pub right_paddle: PaddleModel
+    pub right_paddle: Option<PaddleModel>
 }
 
 impl World {
     pub fn new(
         to_content_server: Sender<EContentRequestType>,
         from_cotent_server: Receiver<EContentRequestResult>,
-        to_render_thread: Sender<RenderFrame>,
+        to_render_thread: SyncSender<RenderFrame>,
         from_render_thread_for_input: Receiver<VirtualKeyCode>,
     ) -> World {
 
@@ -50,14 +52,14 @@ impl World {
             test: 0 as i32,
             input: Input::new(),
             left_paddle: None,
-          //  right_paddle: right_paddle
+           right_paddle: None
         }
     }
 
     pub fn update(
         to_content_server: Sender<EContentRequestType>,
         from_cotent_server: Receiver<EContentRequestResult>,
-        to_render_thread: Sender<RenderFrame>,
+        to_render_thread: SyncSender<RenderFrame>,
         from_render_thread_input: Receiver<VirtualKeyCode>,
     ) {
 
@@ -67,67 +69,58 @@ impl World {
             to_render_thread,
             from_render_thread_input,
         );
-        let content_id_result =
-            world.load_content(EContentRequestType::Image("foo.png".to_string()));
-        match content_id_result {
-            Ok(content_id) => {
 
-                let paddle_model = PaddleModel::new(world.get_uid(), content_id);
-                world.set_left_paddle(paddle_model);
-                world.inner_update();
-            }
-            Err(e) => {}
-        }
+        let mut left_paddle_model = PaddleModel::new(world.get_uid());
+        let mut right_paddle_model = PaddleModel::new(world.get_uid());
+
+        left_paddle_model.set_position(Vector3::new(-0.8f32, -0.0f32, 0.0f32));
+        right_paddle_model.set_position(Vector3::new(0.8f32, -0.0f32, 0.0f32));
+
+        left_paddle_model.set_scale(Vector3::new(0.25f32, 1.0f32, 1.0f32));
+        right_paddle_model.set_scale(Vector3::new(0.25f32, 1.0f32, 1.0f32));
+
+        world.set_left_paddle(left_paddle_model);
+        world.set_right_paddle(right_paddle_model);
+
+        world.inner_update();
 
     }
+
     pub fn set_left_paddle(&mut self, paddle_model: PaddleModel) {
         self.left_paddle = Some(paddle_model);
+    }
+
+    pub fn set_right_paddle(&mut self, paddle_model: PaddleModel) {
+        self.right_paddle = Some(paddle_model);
     }
 
     pub fn inner_update(mut self) {
         let mut frame_timer = FrameTimer::new();
 
-        //the controller for both of the paddles
-        let paddle_controller = PaddleController::new();
 
         let mut frame_count = 0 as u64;
+        let mut paddle_vec;
 
         loop {
-
+            paddle_vec = vec![];
             frame_timer.frame_start();
 
             let input_check = self.from_render_thread_for_input.try_recv();
+
             match input_check {
                 Ok(_input_event) => {}
-                Err(e) => {}
+                Err(_e) => {}
             }
 
-
-            //first we poll for input
-                //then we act on that input
-                //then we render what the new state of world is
-                /*
-                let changes = paddle_controller.update(&self);
-                match changes {
-                    Some(func) => {
-                        func(&mut self);
-                    },
-                    None => {
-
-                    }
-                }
-*/
-            /*
-            let paddle = self.left_paddle.as_ref().unwrap();
-
-            let data = paddle.generate_sprite_render_data().clone();
-
-            let mut render_frame = RenderFrame::new(frame_count.clone());
-            render_frame.sprite_renderers.push(data);
-            self.to_render_thread.send(render_frame);
-
             frame_count = frame_count + 1;
-            */
+            self.left_paddle.as_mut().unwrap().move_pos_x(0.0000001f32);
+            
+            paddle_vec.push(self.left_paddle.as_ref().unwrap().get_box_render_data());
+            paddle_vec.push(self.right_paddle.as_ref().unwrap().get_box_render_data());
+
+            let frame_data = RenderFrame::new(frame_count, Some(paddle_vec), None);
+            let _ = self.to_render_thread.try_send(frame_data);
+
             frame_timer.frame_end();
         }
     }

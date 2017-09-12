@@ -22,7 +22,7 @@ pub mod physics;
 pub mod content;
 pub mod frame_timer;
 
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{Sender, Receiver, sync_channel, SyncSender};
 use std::sync::mpsc;
 use std::thread;
 
@@ -67,9 +67,9 @@ fn main() {
         mpsc::channel();
 
     //this is for the game thread to use to send over frames it wants rendered
-    let (game_thread_render_frame, render_thread_render_frame): (Sender<RenderFrame>,
+    let (game_thread_render_frame, render_thread_render_frame): (SyncSender<RenderFrame>,
                                                                  Receiver<RenderFrame>) =
-        mpsc::channel();
+        mpsc::sync_channel(3);
 
     let (game_input_thread, game_thread_gets_input): (Sender<glutin::VirtualKeyCode>,
                                                       Receiver<glutin::VirtualKeyCode>) =

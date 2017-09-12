@@ -19,10 +19,11 @@ gfx_defines!{
 
     pipeline BoxPipeLine {
         vbuf: gfx::VertexBuffer<BoxVertex> = (),
-        out: gfx::RenderTarget<ColorFormat> = "Target0",
+        out: gfx::BlendTarget<ColorFormat> = ("Target0", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
     }
 }
 
+#[derive(Clone)]
 pub struct BoxRenderData {
     pub pos: Vector2<f32>,
     pub scale: Vector2<f32>,
@@ -32,11 +33,12 @@ pub struct BoxRenderData {
 
 pub struct BoxRenderer {
     pso: gfx::PipelineState<Resources, BoxPipeLine::Meta>,
+    graphics_pool: gfx::GraphicsCommandPool<gfx_device_gl::Backend>,
 }
 
 impl BoxRenderer {
     
-    pub fn new(device: &mut gfx_device_gl::Device) -> BoxRenderer {
+    pub fn new(device: &mut gfx_device_gl::Device, graphics_pool: gfx::GraphicsCommandPool<gfx_device_gl::Backend>) -> BoxRenderer {
 
         let pso = device.create_pipeline_simple(
             include_bytes!(concat!(
@@ -51,18 +53,18 @@ impl BoxRenderer {
         ).unwrap();
 
         BoxRenderer {
-            pso
+            pso,
+            graphics_pool
         }
         
     }
 
-    pub fn render_boxes(&mut self, boxes_to_render: Vec<BoxRenderData>, render_package: &mut RenderPackage, view: &gfx::handle::RenderTargetView<gfx_device_gl::Resources, (gfx::format::R8_G8_B8_A8, gfx::format::Unorm)>,) {
+    pub fn render_boxes(&mut self, boxes_to_render: &Vec<BoxRenderData>, render_package: &mut RenderPackage, view: &gfx::handle::RenderTargetView<gfx_device_gl::Resources, (gfx::format::R8_G8_B8_A8, gfx::format::Unorm)>,) {
         
         let mut vertex_info = vec![];
         let mut index_info : Vec<u16> = vec![];
 
-        let mut graphics_pool = render_package.graphics_queue.create_graphics_pool(1);
-        let mut box_encoder = graphics_pool.acquire_graphics_encoder();
+      //  let mut graphics_pool = render_package.graphics_queue.create_graphics_pool(1);
 
         for box_to_render in boxes_to_render.iter() {
             vertex_info.extend(&[
@@ -87,8 +89,12 @@ impl BoxRenderer {
             out: view.clone(),
         };
 
-        box_encoder.clear(&box_data.out, BLACK);
-        box_encoder.draw(&index_buffer, &self.pso, &box_data);
-        let _ = box_encoder.synced_flush(render_package.graphics_queue, &[&render_package.frame_semaphore], &[&render_package.draw_semaphore], Some(&render_package.frame_fence)).expect("could not flush encoder");
+        {
+            let mut box_encoder = self.graphics_pool.acquire_graphics_encoder();
+            box_encoder.clear(&box_data.out, BLACK);
+            box_encoder.draw(&index_buffer, &self.pso, &box_data);
+            let _ = box_encoder.synced_flush(render_package.graphics_queue, &[&render_package.frame_semaphore], &[&render_package.draw_semaphore], Some(&render_package.frame_fence)).expect("could not flush encoder");
+        }
+        self.graphics_pool.reset();
     }
 }

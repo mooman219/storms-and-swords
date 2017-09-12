@@ -1,48 +1,10 @@
 
-/*
-type Matrix = [[f32; 4]; 4];
-
-impl Mul for Matrix {
-    type Output = Self;
-    fn mul(self, rhs: Self) -> Self {
-
-        for x in 0..4 {
-            for y in 0..4 {
-
-            }
-        }
-
-    }
-}
-*/
-
-/*
-use std::time::Duration;
-
-trait AsMillis {
-    fn as_millis(&self) -> u64;
-}
-
-impl AsMillis for Duration {
-    fn as_millis(&self) -> u64 {
-        self.as_secs() * 1000 + (self.subsec_nanos() / 1_000_000u32) as u64
-    }
-}
-
-fn main() {
-    let duration = Duration::from_millis(5010);
-    assert_eq!(duration.as_millis(), 5010);
-}
-*/
-
-
-
 use std::sync::mpsc::{Receiver, Sender};
-use cgmath::Vector2;
 
 use gfx;
 use glutin;
 use gfx_window_glutin;
+use cgmath::Vector2;
 
 use gfx::{Adapter, CommandQueue, Device, FrameSync,
           Surface, Swapchain, SwapchainExt, WindowExt};
@@ -51,8 +13,7 @@ use gfx_device_gl;
 use game::ContentId;
 use content::load_content::{EContentType, EContentLoadRequst};
 use graphics::box_renderer::BoxRenderData;
-use graphics::sphere_shader::{SphereRenderData, SphereRenderer};
-//use graphics::vertex::{pipe, Vertex};
+use graphics::sphere_renderer::{SphereRenderData, SphereRenderer};
 
 use glutin::{VirtualKeyCode};
 
@@ -63,11 +24,11 @@ use graphics::box_renderer::BoxRenderer;
 pub type ColorFormat = gfx::format::Rgba8;
 pub type DepthFormat = gfx::format::DepthStencil;
 
-//const ONE_FRAME_IN_MILLIE: u64 = 1000 / 60;
 
 pub struct RenderPackage<'a> {
     pub device: &'a mut gfx_device_gl::Device,
     pub graphics_queue: &'a mut gfx::queue::GraphicsQueue<gfx_device_gl::Backend>,
+
     pub frame_semaphore: &'a gfx::handle::Semaphore<gfx_device_gl::Resources>,
     pub draw_semaphore: &'a gfx::handle::Semaphore<gfx_device_gl::Resources>,
     pub frame_fence: &'a gfx::handle::Fence<gfx_device_gl::Resources>,
@@ -94,13 +55,17 @@ impl<'a> RenderPackage<'a> {
 
 #[derive(Clone)]
 pub struct RenderFrame {
-    pub frame_index: u64, //we keep track so we know in what relation we are to the main game loop
+    pub frame_index: u64,
+    pub boxes: Option<Vec<BoxRenderData>>,
+    pub spheres: Option<Vec<SphereRenderData>>,
 }
 
 impl RenderFrame {
-    pub fn new(frame_index: u64) -> RenderFrame {
+    pub fn new(frame_index: u64, boxes: Option<Vec<BoxRenderData>>, spheres: Option<Vec<SphereRenderData>>) -> RenderFrame {
         RenderFrame {
             frame_index: frame_index,
+            boxes,
+            spheres
         }
     }
 }
@@ -111,7 +76,7 @@ pub struct RenderThread {
     from_content_manifest: Receiver<EContentType>,
     to_game_thread_with_input: Sender<VirtualKeyCode>,
     _current_frame_index: u64
-    }
+}
 
 impl RenderThread {
     pub fn new(
@@ -121,18 +86,13 @@ impl RenderThread {
         to_game_thread_with_input: Sender<VirtualKeyCode>,
     ) -> RenderThread {
 
-        //  let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
-        //let sprite_renderer = SpriteRenderer::new(&display);
-
         RenderThread {
-            //      display: display,
             _current_frame_index: 0,
-            //    sprite_renderer: sprite_renderer,
             from_game_thread: from_game_thread,
             to_content_manifest: to_content_manifest,
             from_content_manifest: from_content_manifest,
             to_game_thread_with_input: to_game_thread_with_input
-            }
+        }
     }
 
     pub fn query_content_manifest_for_sprite(&mut self, content_id: ContentId) -> bool {
@@ -170,8 +130,6 @@ impl RenderThread {
         from_content_manifest: Receiver<EContentType>,
         to_game_thread_with_input: Sender<VirtualKeyCode>,
     ) {
-
-
         let mut rend =
             RenderThread::new(from_game_thread, to_content_manifest, from_content_manifest, to_game_thread_with_input);
 
@@ -204,21 +162,24 @@ impl RenderThread {
         let mut swap_chain = surface.build_swapchain(config, &graphics_queue);
         let views : Vec<gfx::handle::RenderTargetView<gfx_device_gl::Resources, (gfx::format::R8_G8_B8_A8, gfx::format::Unorm)>> = swap_chain.create_color_views(&mut device);
 
-        let mut box_rend = BoxRenderer::new(&mut device);
-        let mut sphere_rend = SphereRenderer::new(&mut device);
+        let mut box_rend = BoxRenderer::new(&mut device, graphics_queue.create_graphics_pool(1));
+        let mut sphere_rend = SphereRenderer::new(&mut device, graphics_queue.create_graphics_pool(1));
 
         let frame_semaphore = device.create_semaphore();
         let draw_semaphore = device.create_semaphore();
         let frame_fence = device.create_fence(false);
         let mut running = true;
      
+        let mut shift_test : f32 = 0.001f32;
+        let mut frame;
+        let mut frame_data;
 
         while running {
             let mut render_package = RenderPackage::new(&mut device, &mut graphics_queue, &frame_semaphore, &draw_semaphore, &frame_fence);
             
             frame_timer.frame_start();            
             //the first thing we do is grab the current frame
-            let _frame_data = self.from_game_thread.try_recv();
+
             events_loop.poll_events(|event| {
             
             if let glutin::Event::WindowEvent { event, .. } = event {
@@ -242,21 +203,35 @@ impl RenderThread {
                 }
             }
             });
-            
-            let frame = swap_chain.acquire_frame(FrameSync::Semaphore(&frame_semaphore));
-            let frame_view = &views[frame.id()].clone();
-            
-            let fake = vec![
-                BoxRenderData{pos: Vector2::new(-0.85f32, 0.5f32), scale: Vector2::new(0.25f32, 1.0f32), z_rotation: 0f32, color: [1.0f32, 0.5f32, 0.0f32]},
-                BoxRenderData{pos: Vector2::new( 0.85f32, 0.0f32), scale: Vector2::new(0.25f32, 1.0f32), z_rotation: 0f32, color: [0.5f32, 1.0f32, 0.0f32]}
-            ];
-            
-            box_rend.render_boxes(fake, &mut render_package, &frame_view);
 
-            let fake_shpere = vec![
-                SphereRenderData{pos: Vector2::new(0.0f32, 0.0f32), scale : 1.0f32, color : [1.0f32, 0.0f32, 0.5f32]}
-            ];
-            sphere_rend.render_boxes(fake_shpere, &mut render_package, &frame_view);
+            frame = swap_chain.acquire_frame(FrameSync::Semaphore(&frame_semaphore));
+            let frame_view = &views[frame.id()].clone();
+
+
+
+            frame_data = self.from_game_thread.try_recv();
+
+
+            let frame_data = match frame_data {
+                Ok(data) => Some(data),
+                Err(_) => {
+                    None
+                }
+            };
+            
+            if frame_data.is_some() {
+                let frame_data = frame_data.unwrap();
+                
+                if frame_data.boxes.is_some() {
+                  //  let fake : Vec<BoxRenderData> = vec![BoxRenderData{pos: Vector2::new(0.0f32, 0.0f32), scale: Vector2::new(1.0f32, 1.0f32), z_rotation: 0.0f32, color: [1.0f32, 1.0f32, 1.0f32]}];
+                    box_rend.render_boxes(&frame_data.boxes.unwrap(), &mut render_package, &frame_view);
+                }
+
+                if frame_data.spheres.is_some() {
+                    sphere_rend.render_spheres(&frame_data.spheres.unwrap(), &mut render_package, &frame_view);
+                }
+            }
+
             
             swap_chain.present(&mut render_package.graphics_queue, &[&draw_semaphore]);
             render_package.device.wait_for_fences(&[&frame_fence], gfx::WaitFor::All, 1_000_000);

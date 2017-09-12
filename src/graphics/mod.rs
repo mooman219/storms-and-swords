@@ -5,7 +5,7 @@ pub mod renderable;
 pub mod sprite_renderer;
 pub mod static_sprite_trait;
 pub mod box_renderer;
-pub mod sphere_shader;
+pub mod sphere_renderer;
 
 
 pub use self::render_thread::{ColorFormat, DepthFormat, RenderThread, RenderPackage};
