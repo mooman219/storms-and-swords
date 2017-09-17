@@ -4,7 +4,6 @@ in vec2 a_Pos;
 in vec3 color;
 in float rotation;
 
-
 out vec4 v_Color;
 
 void main() {

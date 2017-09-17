@@ -3,6 +3,7 @@ pub mod world;
 pub mod player;
 pub mod paddle;
 pub mod input;
+pub mod ball;
 
 pub use self::player::Player;
 pub use self::world::World;

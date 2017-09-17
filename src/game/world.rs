@@ -6,13 +6,14 @@ use std::thread::sleep;
 use cgmath::Vector3;
 
 use game::ContentId;
-use game::entity::{Entity, UID};
+use game::entity::{Entity, UID, EEntityType, EntityController};
 use std::sync::mpsc::{Receiver, Sender, SyncSender};
 use content::load_content::{EContentRequestType, EContentRequestResult};
 use graphics::render_thread::RenderFrame;
 use glutin::VirtualKeyCode;
 use game::Input;
 use game::paddle::{PaddleModel, PaddleController};
+use game::ball::{BallModel, BallController};
 
 
 use frame_timer::FrameTimer;
@@ -23,7 +24,7 @@ pub enum ELoadContentError {
     LoadThreadNoResponce,
 }
 
-pub struct World {
+pub struct World<'a> {
     pub uids: UID,
     pub to_content_server: Sender<EContentRequestType>,
     pub from_cotent_server: Receiver<EContentRequestResult>,
@@ -31,17 +32,18 @@ pub struct World {
     pub from_render_thread_for_input: Receiver<VirtualKeyCode>,
     pub test: i32,
     pub input: Input,
-    pub left_paddle: Option<PaddleModel>,
-    pub right_paddle: Option<PaddleModel>
+    pub entities: HashMap<UID, &'a Entity>,
+    pub type_to_uid_list: HashMap<EEntityType, Vec<UID>>,
+    pub entity_controllers: HashMap<EEntityType, &'a EntityController>
 }
 
-impl World {
+impl<'a> World<'a> {
     pub fn new(
         to_content_server: Sender<EContentRequestType>,
         from_cotent_server: Receiver<EContentRequestResult>,
         to_render_thread: SyncSender<RenderFrame>,
         from_render_thread_for_input: Receiver<VirtualKeyCode>,
-    ) -> World {
+    ) -> World<'a> {
 
         World {
             uids: 0 as i64,
@@ -51,8 +53,9 @@ impl World {
             from_render_thread_for_input: from_render_thread_for_input,
             test: 0 as i32,
             input: Input::new(),
-            left_paddle: None,
-           right_paddle: None
+            entities: HashMap::new(),
+            type_to_uid_list: HashMap::new(),
+            entity_controllers: HashMap::new(),
         }
     }
 
@@ -70,28 +73,25 @@ impl World {
             from_render_thread_input,
         );
 
-        let mut left_paddle_model = PaddleModel::new(world.get_uid());
-        let mut right_paddle_model = PaddleModel::new(world.get_uid());
-
-        left_paddle_model.set_position(Vector3::new(-0.8f32, -0.0f32, 0.0f32));
-        right_paddle_model.set_position(Vector3::new(0.8f32, -0.0f32, 0.0f32));
-
-        left_paddle_model.set_scale(Vector3::new(0.25f32, 1.0f32, 1.0f32));
-        right_paddle_model.set_scale(Vector3::new(0.25f32, 1.0f32, 1.0f32));
-
-        world.set_left_paddle(left_paddle_model);
-        world.set_right_paddle(right_paddle_model);
-
         world.inner_update();
 
     }
 
-    pub fn set_left_paddle(&mut self, paddle_model: PaddleModel) {
-        self.left_paddle = Some(paddle_model);
+    pub fn get_entity(&self, uid: UID) -> Option<&&Entity> {
+        self.entities.get(&uid)
     }
 
-    pub fn set_right_paddle(&mut self, paddle_model: PaddleModel) {
-        self.right_paddle = Some(paddle_model);
+    pub fn get_mut_entity(&mut self, uid: UID) -> Option<&mut &'a Entity> {
+      self.entities.get_mut(&uid)
+    }
+    pub fn add_entity(&mut self, entity: Box<Entity>) {
+        let entity_type = entity.get_entity_type();
+        if !self.type_to_uid_list.contains_key(&entity_type){
+            self.type_to_uid_list.insert(entity_type, Vec::new());
+        }
+        self.type_to_uid_list.get_mut(&entity_type).unwrap().push(entity.get_uid());
+        let entity = unsafe {&mut *Box::into_raw(entity)};
+        self.entities.insert(entity.get_uid(), entity);
     }
 
     pub fn inner_update(mut self) {
@@ -100,9 +100,28 @@ impl World {
 
         let mut frame_count = 0 as u64;
         let mut paddle_vec;
+        let mut ball_vec;
+
+        self.entity_controllers.insert(EEntityType::PADDLE, &PaddleController{});
+        self.entity_controllers.insert(EEntityType::BALL, &BallController{});
+
+        let ball_model = BallModel::new(self.get_uid());
+        self.add_entity(Box::new(ball_model));
+
+        let mut paddle_model_1 = PaddleModel::new(self.get_uid());
+        paddle_model_1.set_position(Vector3::new(-0.8f32, 0.0f32, 0.0f32));
+        paddle_model_1.set_scale(Vector3::new(1.0f32, 2.0f32, 0.0f32));
+
+        let mut paddle_model_2 = PaddleModel::new(self.get_uid());
+        paddle_model_2.set_position(Vector3::new(0.8f32, 0.0f32, 0.0f32));
+        paddle_model_2.set_scale(Vector3::new(1.0f32, 2.0f32, 0.0f32));
+
+        self.add_entity(Box::new(paddle_model_1));
+        self.add_entity(Box::new(paddle_model_2));
 
         loop {
             paddle_vec = vec![];
+            ball_vec = vec![];
             frame_timer.frame_start();
 
             let input_check = self.from_render_thread_for_input.try_recv();
@@ -112,13 +131,24 @@ impl World {
                 Err(_e) => {}
             }
 
-            frame_count = frame_count + 1;
-            self.left_paddle.as_mut().unwrap().move_pos_x(0.0000001f32);
-            
-            paddle_vec.push(self.left_paddle.as_ref().unwrap().get_box_render_data());
-            paddle_vec.push(self.right_paddle.as_ref().unwrap().get_box_render_data());
+            let mut modify_functions = vec![];
 
-            let frame_data = RenderFrame::new(frame_count, Some(paddle_vec), None);
+            for controllers in &self.entity_controllers {
+              modify_functions.push(controllers.1.update(&self));
+            }
+
+            for funcs in &modify_functions {
+              funcs.as_ref().unwrap()(&mut self);
+            }
+
+            frame_count = frame_count + 1;
+
+            let paddle_uids = self.type_to_uid_list.get(&EEntityType::PADDLE).unwrap().clone();
+            for uids in paddle_uids {
+              
+            }
+
+            let frame_data = RenderFrame::new(frame_count, Some(paddle_vec), Some(ball_vec));
             let _ = self.to_render_thread.try_send(frame_data);
 
             frame_timer.frame_end();
@@ -131,7 +161,7 @@ impl World {
 
     pub fn get_uid(&mut self) -> UID {
         self.uids += 1;
-        return self.uids.clone();
+        return self.uids;
     }
 
     pub fn load_content(

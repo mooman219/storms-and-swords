@@ -1,6 +1,5 @@
-use game::entity::{Entity, UID};
+use game::entity::{Entity, UID, EEntityType, EntityController};
 use cgmath::{Vector3, Vector2};
-use game::ContentId;
 use game::world::World;
 use game::input::EKeyCode;
 
@@ -12,40 +11,39 @@ impl PaddleController {
     pub fn new() -> PaddleController {
         PaddleController {}
     }
+}
 
-    pub fn update(&self, world: &World) -> Option<Box<Fn(&mut World)>> {
+impl EntityController for PaddleController {
+   fn update(&self, _world: &World) -> Option<Box<Fn(&mut World)>> {
 
         let return_closure = move |inner_world: &mut World| {
+          let uid_list = inner_world.type_to_uid_list[&EEntityType::PADDLE].clone();
 
-            if inner_world.get_input().get_key_down(EKeyCode::EKeyS) {
+          for uid in uid_list {
 
-                let new_pos = inner_world
-                    .left_paddle
-                    .as_ref()
-                    .unwrap()
-                    .get_position()
-                    .clone() + Vector3::new(0f32, -0.001f32, 0.0f32);
-                inner_world.left_paddle.as_mut().unwrap().set_position(
-                    new_pos,
-                );
-            }
+            let test = inner_world.get_mut_entity(uid);
 
-            if inner_world.get_input().get_key_down(EKeyCode::EKeyW) {
-                let new_pos = inner_world
-                    .left_paddle
-                    .as_ref()
-                    .unwrap()
-                    .get_position()
-                    .clone() + Vector3::new(0f32, 0.001f32, 0.0f32);
-                inner_world.left_paddle.as_mut().unwrap().set_position(
-                    new_pos,
-                );
-            }
+            let test = match test {
+                Some(val) => val,
+                None => {
+                  return;
+                },
+            };
+
+
+            let test = unsafe {&mut *(test as *mut &Entity as *mut &PaddleModel)};
+
         };
+      };
 
         return Some(Box::new(return_closure));
     }
+
+    fn get_entity_type(&self) -> EEntityType {
+        return EEntityType::PADDLE;
+    }
 }
+
 
 pub struct PaddleModel {
     position: Vector3<f32>,
@@ -68,8 +66,8 @@ impl PaddleModel {
         self.position = new_pos;
     }
 
-    pub fn move_pos_x(&mut self, shift_X: f32) {
-        self.position = Vector3::new(self.position.x + shift_X, self.position.y, self.position.z);
+    pub fn move_pos_x(&mut self, shift_x: f32) {
+        self.position = Vector3::new(self.position.x + shift_x, self.position.y, self.position.z);
     }
 
     pub fn get_position(&self) -> Vector3<f32> {
@@ -104,4 +102,14 @@ impl PaddleModel {
             color: [0.8f32, 0.4f32, 0.6f32]
         }
     }
+}
+
+impl Entity for PaddleModel {
+  fn get_entity_type(&self) -> EEntityType {
+    EEntityType::PADDLE
+  }
+
+  fn get_uid(&self) -> UID {
+    self.uid
+  }
 }
