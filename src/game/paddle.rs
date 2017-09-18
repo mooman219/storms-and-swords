@@ -32,8 +32,10 @@ impl EntityController for PaddleController {
             };
 
 
-            let test = unsafe {&mut *(test as *mut &Entity as *mut &PaddleModel)};
+            let test = unsafe {&mut *(test as *mut &Entity as *mut &mut PaddleModel)};
+            let pos_x = test.get_position().x;
 
+            test.set_position(Vector3::new(pos_x + 0.0000005f32, 0.0f32, 0.0f32));
 
         };
       };
@@ -91,11 +93,6 @@ impl PaddleModel {
     pub fn get_rotation(&self) -> Vector3<f32> {
         self.rotation
     }
-
-    pub fn get_uid(&self) -> UID {
-        self.uid.clone()
-    }
-
 }
 
 impl Entity for PaddleModel {

@@ -4,7 +4,7 @@ use graphics::render_thread::RenderFrame;
 
 
 //it is this large for two reasons, one I want to make sure that we never run out to space, and second so that we can have negative uids for flag varibles
-pub type UID = i64;
+pub type UID = u64;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum EEntityType {

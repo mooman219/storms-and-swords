@@ -46,7 +46,7 @@ impl<'a> World<'a> {
     ) -> World<'a> {
 
         World {
-            uids: 0 as i64,
+            uids: 1 as u64,//uids start at 1, because we can use 0 as a flag value, a NULL valye
             to_content_server: to_content_server,
             from_cotent_server: from_cotent_server,
             to_render_thread: to_render_thread,
@@ -66,7 +66,7 @@ impl<'a> World<'a> {
         from_render_thread_input: Receiver<VirtualKeyCode>,
     ) {
 
-        let mut world: World = World::new(
+        let world: World = World::new(
             to_content_server,
             from_cotent_server,
             to_render_thread,
