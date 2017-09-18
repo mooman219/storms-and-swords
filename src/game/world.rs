@@ -99,9 +99,6 @@ impl<'a> World<'a> {
 
 
         let mut frame_count = 0 as u64;
-        let mut paddle_vec;
-        let mut ball_vec;
-
         self.entity_controllers.insert(EEntityType::PADDLE, &PaddleController{});
         self.entity_controllers.insert(EEntityType::BALL, &BallController{});
 
@@ -110,18 +107,16 @@ impl<'a> World<'a> {
 
         let mut paddle_model_1 = PaddleModel::new(self.get_uid());
         paddle_model_1.set_position(Vector3::new(-0.8f32, 0.0f32, 0.0f32));
-        paddle_model_1.set_scale(Vector3::new(1.0f32, 2.0f32, 0.0f32));
+        paddle_model_1.set_scale(Vector3::new(0.25f32, 1.0f32, 0.0f32));
 
         let mut paddle_model_2 = PaddleModel::new(self.get_uid());
         paddle_model_2.set_position(Vector3::new(0.8f32, 0.0f32, 0.0f32));
-        paddle_model_2.set_scale(Vector3::new(1.0f32, 2.0f32, 0.0f32));
+        paddle_model_2.set_scale(Vector3::new(0.25f32, 1.0f32, 0.0f32));
 
         self.add_entity(Box::new(paddle_model_1));
         self.add_entity(Box::new(paddle_model_2));
 
         loop {
-            paddle_vec = vec![];
-            ball_vec = vec![];
             frame_timer.frame_start();
 
             let input_check = self.from_render_thread_for_input.try_recv();
@@ -143,13 +138,15 @@ impl<'a> World<'a> {
 
             frame_count = frame_count + 1;
 
-            let paddle_uids = self.type_to_uid_list.get(&EEntityType::PADDLE).unwrap().clone();
-            for uids in paddle_uids {
-              
+
+            let mut render_frame = RenderFrame::new(frame_count, None, None);
+
+            for ent_uid in &self.entities {
+                let ent = ent_uid.1;
+                ent.add_to_render_frame(&mut render_frame);
             }
 
-            let frame_data = RenderFrame::new(frame_count, Some(paddle_vec), Some(ball_vec));
-            let _ = self.to_render_thread.try_send(frame_data);
+            let _ = self.to_render_thread.try_send(render_frame);
 
             frame_timer.frame_end();
         }

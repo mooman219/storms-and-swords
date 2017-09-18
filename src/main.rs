@@ -33,8 +33,8 @@ use graphics::RenderThread;
 use graphics::render_thread::RenderFrame;
 use game::World;
 
+//&буря-engine
 fn main() {
-
     //let PLEASE = glium::glutin::
     //this is for assets that have been loaded by their threads
     //and then for the content manifest to keep track of them

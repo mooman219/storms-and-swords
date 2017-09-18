@@ -1,5 +1,6 @@
 use cgmath::Vector2;
 use graphics::sphere_renderer::SphereRenderData;
+use graphics::render_thread::RenderFrame;
 use game::World;
 use game::entity::{Entity, EntityController, EEntityType, UID};
 
@@ -16,14 +17,6 @@ impl BallModel {
             uid
         }
     }
-
-    pub fn get_sphere_render_data(&self) -> SphereRenderData {
-        SphereRenderData {
-            pos: self.pos.clone(),
-            scale: 0.25f32,
-            color: [1.0f32, 0.4f32, 0.1f32]
-        }
-    }
 }
 
 impl Entity for BallModel {
@@ -34,12 +27,28 @@ impl Entity for BallModel {
   fn get_uid(&self) -> UID {
     self.uid
   }
+
+  fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
+      let srd = SphereRenderData {
+          pos: self.pos.clone(),
+          scale: 0.25f32,
+          color: [1.0f32, 0.4f32, 0.1f32]
+      };
+
+      if render_frame.spheres.is_none() {
+          render_frame.spheres = Some(vec![srd]);
+      }
+      else {
+          render_frame.spheres.as_mut().unwrap().push(srd);
+      }
+  }
+
 }
 
 pub struct BallController {}
 
 impl EntityController for BallController {
-    fn update(&self, world: &World) -> Option<Box<Fn(&mut World)>> {
+    fn update(&self, _world: &World) -> Option<Box<Fn(&mut World)>> {
 
 
         let return_function = move |inner_world: &mut World| {
@@ -57,7 +66,7 @@ impl EntityController for BallController {
               };
 
 
-              let test = unsafe {&mut *(test as *mut &Entity as *mut &BallModel)};
+              let _test = unsafe {&mut *(test as *mut &Entity as *mut &BallModel)};
 
             }
 

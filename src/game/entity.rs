@@ -1,5 +1,6 @@
 use cgmath::Vector3;
 use game::World;
+use graphics::render_thread::RenderFrame;
 
 
 //it is this large for two reasons, one I want to make sure that we never run out to space, and second so that we can have negative uids for flag varibles
@@ -14,6 +15,7 @@ pub enum EEntityType {
 pub trait Entity {
   fn get_entity_type(&self) -> EEntityType;
   fn get_uid(&self) -> UID;
+  fn add_to_render_frame(&self, render_frame: &mut RenderFrame);
 }
 
 pub trait EntityController {

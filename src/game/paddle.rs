@@ -2,6 +2,7 @@ use game::entity::{Entity, UID, EEntityType, EntityController};
 use cgmath::{Vector3, Vector2};
 use game::world::World;
 use game::input::EKeyCode;
+use graphics::render_thread::RenderFrame;
 
 use graphics::BoxRenderData;
 
@@ -32,6 +33,7 @@ impl EntityController for PaddleController {
 
 
             let test = unsafe {&mut *(test as *mut &Entity as *mut &PaddleModel)};
+
 
         };
       };
@@ -94,14 +96,6 @@ impl PaddleModel {
         self.uid.clone()
     }
 
-    pub fn get_box_render_data(&self) -> BoxRenderData {
-        BoxRenderData {
-            pos: Vector2::new(self.position.x, self.position.y),
-            scale: Vector2::new(self.scale.x, self.scale.y),
-            z_rotation: 0f32,
-            color: [0.8f32, 0.4f32, 0.6f32]
-        }
-    }
 }
 
 impl Entity for PaddleModel {
@@ -111,5 +105,21 @@ impl Entity for PaddleModel {
 
   fn get_uid(&self) -> UID {
     self.uid
+  }
+
+  fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
+      let brd = BoxRenderData {
+        pos: Vector2::new(self.position.x, self.position.y),
+        scale: Vector2::new(self.scale.x, self.scale.y),
+        z_rotation: 0f32,
+        color: [0.8f32, 0.4f32, 0.6f32]
+     };
+
+    if render_frame.boxes.is_none() {
+      render_frame.boxes = Some(vec![brd]);
+    }
+    else {
+      render_frame.boxes.as_mut().unwrap().push(brd);
+    }
   }
 }
