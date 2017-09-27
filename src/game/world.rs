@@ -1,7 +1,5 @@
 use std::boxed::Box;
 use std::collections::HashMap;
-use std::time::{SystemTime, Duration};
-use std::thread::sleep;
 
 use cgmath::Vector3;
 
@@ -106,11 +104,11 @@ impl<'a> World<'a> {
         self.add_entity(Box::new(ball_model));
 
         let mut paddle_model_1 = PaddleModel::new(self.get_uid());
-        paddle_model_1.set_position(Vector3::new(-0.8f32, 0.0f32, 0.0f32));
-        paddle_model_1.set_scale(Vector3::new(0.25f32, 1.0f32, 0.0f32));
+        paddle_model_1.set_position(Vector3::new(200.0f32, 0.0f32, 0.0f32));
+        paddle_model_1.set_scale(Vector3::new(1.0f32, 1.0f32, 0.0f32));
 
         let mut paddle_model_2 = PaddleModel::new(self.get_uid());
-        paddle_model_2.set_position(Vector3::new(0.8f32, 0.0f32, 0.0f32));
+        paddle_model_2.set_position(Vector3::new(0.0f32, 0.0f32, 0.0f32));
         paddle_model_2.set_scale(Vector3::new(0.25f32, 1.0f32, 0.0f32));
 
         self.add_entity(Box::new(paddle_model_1));

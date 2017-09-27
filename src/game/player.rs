@@ -1,3 +1,4 @@
+/*
 use game::entity::{Entity, UID};
 use cgmath::Vector3;
 
@@ -20,3 +21,4 @@ impl Player {
         }
     }
 }
+*/

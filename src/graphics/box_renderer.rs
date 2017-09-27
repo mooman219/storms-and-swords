@@ -1,4 +1,4 @@
-use cgmath::Vector2;
+use cgmath::{self, Vector2};
 use gfx;
 use gfx_device_gl;
 use gfx_device_gl::{Resources};
@@ -6,10 +6,12 @@ use gfx::{Device, CommandQueue,FrameSync, GraphicsPoolExt,
           Surface, Swapchain, SwapchainExt, WindowExt};
 use gfx::traits::DeviceExt;
 
-use graphics::render_thread::RenderPackage;
+use graphics::render_thread::{RenderPackage, RenderThread};
 type ColorFormat = gfx::format::Rgba8;
 
 const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+
+
 gfx_defines!{
     vertex BoxVertex {
         pos: [f32;2] = "a_Pos",
@@ -17,11 +19,16 @@ gfx_defines!{
         rotation: f32 = "rotation",
     }
 
+    constant Transform {
+        prop: [[f32;4];4] = "u_prop",
+    }
+
     pipeline BoxPipeLine {
         vbuf: gfx::VertexBuffer<BoxVertex> = (),
+        perp: gfx::ConstantBuffer<Transform> = "Pro",
         out: gfx::BlendTarget<ColorFormat> = ("Target0", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
     }
-}
+} 
 
 #[derive(Clone)]
 pub struct BoxRenderData {
@@ -59,7 +66,7 @@ impl BoxRenderer {
         
     }
 
-    pub fn render_boxes(&mut self, boxes_to_render: &Vec<BoxRenderData>, render_package: &mut RenderPackage, view: &gfx::handle::RenderTargetView<gfx_device_gl::Resources, (gfx::format::R8_G8_B8_A8, gfx::format::Unorm)>,) {
+    pub fn render_boxes(&mut self, boxes_to_render: &Vec<BoxRenderData>, render_package: &mut RenderPackage, view: &gfx::handle::RenderTargetView<gfx_device_gl::Resources, (gfx::format::R8_G8_B8_A8, gfx::format::Unorm)>, rt : &mut RenderThread) {
         
         let mut vertex_info = vec![];
         let mut index_info : Vec<u16> = vec![];
@@ -81,16 +88,24 @@ impl BoxRenderer {
             index_info.extend(&[0 + (i * 4), 1 + (i * 4), 2 + (i * 4),//top left triangle
                                 2 + (i * 4), 1 + (i * 4), 3 + (i * 4)]);//bottom right triangle
         }
-
-        let (vertex_buffer, index_buffer) = render_package.device.create_vertex_buffer_with_slice(&vertex_info, &*index_info);
         
+        let (vertex_buffer, index_buffer) = render_package.device.create_vertex_buffer_with_slice(&vertex_info, &*index_info);
+
+        let t = Transform{
+            prop: rt.use_matrix
+        };
+
+        let constant_buffer = render_package.device.create_constant_buffer(1);
+
         let box_data = BoxPipeLine::Data {
             vbuf: vertex_buffer.clone(),
+            perp: constant_buffer,
             out: view.clone(),
         };
 
         {
             let mut box_encoder = self.graphics_pool.acquire_graphics_encoder();
+            let _ = box_encoder.update_buffer(&box_data.perp, &[t], 0);
             box_encoder.clear(&box_data.out, BLACK);
             box_encoder.draw(&index_buffer, &self.pso, &box_data);
             let _ = box_encoder.synced_flush(render_package.graphics_queue, &[&render_package.frame_semaphore], &[&render_package.draw_semaphore], Some(&render_package.frame_fence)).expect("could not flush encoder");

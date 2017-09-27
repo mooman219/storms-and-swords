@@ -2,11 +2,10 @@ use cgmath::Vector2;
 use gfx;
 use gfx_device_gl;
 use gfx_device_gl::{Resources};
-use gfx::{Device, CommandQueue,FrameSync, GraphicsPoolExt,
-          Surface, Swapchain, SwapchainExt, WindowExt};
+use gfx::{GraphicsPoolExt};
 use gfx::traits::DeviceExt;
 
-use graphics::render_thread::RenderPackage;
+use graphics::render_thread::{RenderPackage, RenderThread};
 type ColorFormat = gfx::format::Rgba8;
 
 gfx_defines!{
@@ -16,8 +15,13 @@ gfx_defines!{
         color: [f32;3] = "color",
     }
 
+    constant Transform {
+        proj: [[f32;4];4] = "u_prop",
+    }
+
     pipeline SpherePipeLine {
         vbuf: gfx::VertexBuffer<SphereVertex> = (),
+        proj_uni: gfx::ConstantBuffer<Transform> = "Proj",
         out: gfx::BlendTarget<ColorFormat> = ("Target0", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
     }
 }
@@ -57,7 +61,7 @@ impl SphereRenderer {
         
     }
 
-    pub fn render_spheres(&mut self, boxes_to_render: &Vec<SphereRenderData>, render_package: &mut RenderPackage, view: &gfx::handle::RenderTargetView<gfx_device_gl::Resources, (gfx::format::R8_G8_B8_A8, gfx::format::Unorm)>,) {
+    pub fn render_spheres(&mut self, boxes_to_render: &Vec<SphereRenderData>, render_package: &mut RenderPackage, view: &gfx::handle::RenderTargetView<gfx_device_gl::Resources, (gfx::format::R8_G8_B8_A8, gfx::format::Unorm)>, rt: &mut RenderThread) {
         
         let mut vertex_info = vec![];
         let mut index_info : Vec<u16> = vec![];
@@ -80,15 +84,20 @@ impl SphereRenderer {
         }
 
         let (vertex_buffer, index_buffer) = render_package.device.create_vertex_buffer_with_slice(&vertex_info, &*index_info);
-        
+        let t = Transform {
+            proj: rt.use_matrix,
+        };
+        let constant_buffer  = render_package.device.create_constant_buffer(1);
+
         let box_data = SpherePipeLine::Data {
             vbuf: vertex_buffer.clone(),
+            proj_uni: constant_buffer,
             out: view.clone(),
         };
 
         {
             let mut sphere_encoder = self.graphics_pool.acquire_graphics_encoder();
-        //    sphere_encoder.clear(&box_data.out, BLACK);
+            let _ = sphere_encoder.update_buffer(&box_data.proj_uni, &[t], 0);
             sphere_encoder.draw(&index_buffer, &self.pso, &box_data);
             let _ = sphere_encoder.synced_flush(render_package.graphics_queue, &[&render_package.frame_semaphore.clone()], &[&render_package.draw_semaphore.clone()], Some(&render_package.frame_fence.clone())).expect("could not flush encoder");
         }

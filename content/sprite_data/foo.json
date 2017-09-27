@@ -1,0 +1,9 @@
+{
+    "type":"static_sprite",
+    "start_pos": {
+        "x":0.1,
+        "y":0.1
+    },
+    "width":0.2,
+    "height":0.2
+}

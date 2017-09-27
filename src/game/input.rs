@@ -10,7 +10,7 @@ pub enum EKeyCode {
     EKeyDownArrow,
 }
 
-pub struct Input {
+pub struct Input { 
     pub keys: HashMap<EKeyCode, bool>,
 }
 

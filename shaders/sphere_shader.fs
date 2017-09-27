@@ -1,4 +1,4 @@
-#version 150 core
+#version 330 core
 
 in vec4 v_Color;
 in vec2 out_uv;
@@ -10,8 +10,8 @@ void main() {
     float x_diff = out_uv.x - 0.5f;
     float y_diff = out_uv.y - 0.5f;
     float total = (x_diff * x_diff)  + (y_diff * y_diff);
-    float final_height = sqrt(total);
-    if(final_height <= 0.5) {
+
+    if(total <= .25) {
       Target0 = v_Color;
     }
     else {

@@ -1,7 +1,6 @@
 use game::entity::{Entity, UID, EEntityType, EntityController};
 use cgmath::{Vector3, Vector2};
 use game::world::World;
-use game::input::EKeyCode;
 use graphics::render_thread::RenderFrame;
 
 use graphics::BoxRenderData;
@@ -35,7 +34,7 @@ impl EntityController for PaddleController {
             let test = unsafe {&mut *(test as *mut &Entity as *mut &mut PaddleModel)};
             let pos_x = test.get_position().x;
 
-            test.set_position(Vector3::new(pos_x + 0.0000005f32, 0.0f32, 0.0f32));
+           test.set_position(Vector3::new(pos_x + 0.01f32, 0.0f32, 0.0f32));
 
         };
       };
@@ -59,7 +58,7 @@ pub struct PaddleModel {
 impl PaddleModel {
     pub fn new(uid: UID) -> PaddleModel {
         PaddleModel {
-            position: Vector3::new(0.0f32, 0.0f32, 0.0f32),
+            position: Vector3::new(0.001f32, 0.0f32, 0.0f32),
             scale: Vector3::new(1.0f32, 1.0f32, 1.0f32),
             rotation: Vector3::new(0.0f32, 0.0f32, 0.0f32),
             uid: uid,
@@ -79,7 +78,7 @@ impl PaddleModel {
     }
 
     pub fn set_scale(&mut self, new_scale: Vector3<f32>) {
-        self.scale = new_scale;
+        self.scale = Vector3::new(new_scale.x * 1000f32, new_scale.y * 1000f32, new_scale.z * 1000f32);
     }
 
     pub fn get_scale(&self) -> Vector3<f32> {

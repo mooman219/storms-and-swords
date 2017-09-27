@@ -4,11 +4,12 @@ use std::sync::mpsc::{Receiver, Sender};
 use gfx;
 use glutin;
 use gfx_window_glutin;
-use cgmath::Vector2;
+use std::collections::HashMap;
 
 use gfx::{Adapter, CommandQueue, Device, FrameSync,
           Surface, Swapchain, SwapchainExt, WindowExt};
 use gfx_device_gl;
+use image;
 
 use game::ContentId;
 use content::load_content::{EContentType, EContentLoadRequst};
@@ -20,6 +21,7 @@ use glutin::{VirtualKeyCode};
 use frame_timer::FrameTimer;
 
 use graphics::box_renderer::BoxRenderer;
+use cgmath::{self};
 
 pub type ColorFormat = gfx::format::Rgba8;
 pub type DepthFormat = gfx::format::DepthStencil;
@@ -72,31 +74,51 @@ impl RenderFrame {
 
 pub struct RenderThread {
     from_game_thread: Receiver<RenderFrame>,
-    to_content_manifest: Sender<EContentLoadRequst>,
-    from_content_manifest: Receiver<EContentType>,
+    _to_content_manifest: Sender<EContentLoadRequst>,
+    _from_content_manifest: Receiver<EContentType>,
     to_game_thread_with_input: Sender<VirtualKeyCode>,
-    _current_frame_index: u64
+    _current_frame_index: u64,
+    textures: HashMap<ContentId,gfx::handle::ShaderResourceView<gfx_device_gl::Resources, [f32;4]>>,
+    pub use_matrix : [[f32;4];4],
 }
 
 impl RenderThread {
+
     pub fn new(
         from_game_thread: Receiver<RenderFrame>,
         to_content_manifest: Sender<EContentLoadRequst>,
         from_content_manifest: Receiver<EContentType>,
         to_game_thread_with_input: Sender<VirtualKeyCode>,
     ) -> RenderThread {
-
+        let o = cgmath::ortho(-2000.0f32, 2000.0f32, -2000.0f32, 2000.0f32, 0.0, 10.0);
         RenderThread {
             _current_frame_index: 0,
             from_game_thread: from_game_thread,
-            to_content_manifest: to_content_manifest,
-            from_content_manifest: from_content_manifest,
-            to_game_thread_with_input: to_game_thread_with_input
+            _to_content_manifest: to_content_manifest,
+            _from_content_manifest: from_content_manifest,
+            to_game_thread_with_input: to_game_thread_with_input,
+            textures: HashMap::new(),
+            use_matrix: [
+                [o.x[0], o.x[1], o.x[2], o.x[3]],
+                [o.y[0], o.y[1], o.y[2], o.y[3]], 
+                [o.z[0], o.z[1], o.z[2], o.z[3]], 
+                [o.w[0], o.w[1], o.w[2], o.w[3]] 
+            ]
         }
     }
 
-    pub fn query_content_manifest_for_sprite(&mut self, content_id: ContentId) -> bool {
-        return false;
+    pub fn load_texture<D, R>(factory: &mut D, path: &str) -> gfx::handle::ShaderResourceView<R, [f32; 4]> where D: gfx::Device<R>, R: gfx::Resources
+    {
+        let img = image::open(path).unwrap().to_rgba();
+        let (width, height) = img.dimensions();
+        let kind = gfx::texture::Kind::D2(width as u16, height as u16, gfx::texture::AaMode::Single);
+        let (_, view) = factory.create_texture_immutable_u8::<ColorFormat>(kind, &[&img]).unwrap();
+        view
+    }
+
+    pub fn query_content_manifest_for_sprite(&mut self, _content_id: ContentId) -> bool {
+
+        return false;        
         /*
         if self.sprites.contains_key(&content_id) {
             true
@@ -141,6 +163,8 @@ impl RenderThread {
         let mut frame_timer = FrameTimer::new();
         let mut events_loop = glutin::EventsLoop::new();
 
+        
+
         let builder = glutin::WindowBuilder::new()
             .with_title("Square Toy".to_string())
             .with_dimensions(800, 800);
@@ -169,14 +193,13 @@ impl RenderThread {
         let draw_semaphore = device.create_semaphore();
         let frame_fence = device.create_fence(false);
         let mut running = true;
-     
-        let mut shift_test : f32 = 0.001f32;
+        
         let mut frame;
         let mut frame_data;
 
         while running {
+           
             let mut render_package = RenderPackage::new(&mut device, &mut graphics_queue, &frame_semaphore, &draw_semaphore, &frame_fence);
-            
             frame_timer.frame_start();            
             //the first thing we do is grab the current frame
 
@@ -224,11 +247,11 @@ impl RenderThread {
                 
                 if frame_data.boxes.is_some() {
                   //  let fake : Vec<BoxRenderData> = vec![BoxRenderData{pos: Vector2::new(0.0f32, 0.0f32), scale: Vector2::new(1.0f32, 1.0f32), z_rotation: 0.0f32, color: [1.0f32, 1.0f32, 1.0f32]}];
-                    box_rend.render_boxes(&frame_data.boxes.unwrap(), &mut render_package, &frame_view);
+                    box_rend.render_boxes(&frame_data.boxes.unwrap(), &mut render_package, &frame_view, self);
                 }
 
                 if frame_data.spheres.is_some() {
-                    sphere_rend.render_spheres(&frame_data.spheres.unwrap(), &mut render_package, &frame_view);
+                    sphere_rend.render_spheres(&frame_data.spheres.unwrap(), &mut render_package, &frame_view, self);
                 }
             }
 

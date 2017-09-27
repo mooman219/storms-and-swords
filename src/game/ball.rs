@@ -31,7 +31,7 @@ impl Entity for BallModel {
   fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
       let srd = SphereRenderData {
           pos: self.pos.clone(),
-          scale: 0.25f32,
+          scale: 250.0f32,
           color: [1.0f32, 0.4f32, 0.1f32]
       };
 

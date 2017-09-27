@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use game::ContentId;
 use content::load_content::{EContentType, EContentLoadRequst};
 use image::DynamicImage;
+use frame_timer::FrameTimer;
 
 pub struct ContentManifest {
     pub loaded_images: HashMap<ContentId, DynamicImage>,
@@ -33,8 +34,10 @@ impl ContentManifest {
 
         let mut content_manifest: ContentManifest =
             ContentManifest::new(loaded_asset_channel, from_render_thread, to_render_thread);
-        return;
+        
+        let mut frame_check = FrameTimer::new();        
         loop {
+            frame_check.frame_start();
             let possible_new_asset = content_manifest.loaded_asset_channel.try_recv();
             match possible_new_asset {
                 Ok(new_asset) => {
@@ -81,7 +84,7 @@ impl ContentManifest {
                 }
                 Err(_) => {}
             }
-
+            frame_check.frame_end();
         }
     }
 }

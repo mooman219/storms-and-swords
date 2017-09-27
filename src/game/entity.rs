@@ -1,4 +1,3 @@
-use cgmath::Vector3;
 use game::World;
 use graphics::render_thread::RenderFrame;
 
@@ -22,46 +21,3 @@ pub trait EntityController {
     fn update(&self, world: &World) -> Option<Box<Fn(&mut World)>>;
     fn get_entity_type(&self) -> EEntityType;
 }
-
-/*
-pub struct Entity {
-    name: String,
-    position: Vector3<f32>,
-    scale: Vector3<f32>,
-    rotation: Vector3<f32>,
-    uid: UID,
-}
-
-
-impl Entity {
-    pub fn new(name: String, uid: UID) -> Entity {
-        Entity {
-            name: name,
-            position: Vector3::<f32>::new(0.0f32, 0.0f32, 0.0f32),
-            scale: Vector3::<f32>::new(1.0f32, 1.0f32, 1.0f32),
-            rotation: Vector3::<f32>::new(0.0f32, 0.0f32, 0.0f32),
-            uid: uid,
-        }
-    }
-
-    pub fn get_position(&self) -> Vector3<f32> {
-        self.position.clone()
-    }
-
-    pub fn get_rotation(&self) -> Vector3<f32> {
-        self.rotation.clone()
-    }
-
-    pub fn get_scale(&self) -> Vector3<f32> {
-        self.scale.clone()
-    }
-
-    pub fn get_uid(&self) -> UID {
-        self.uid.clone()
-    }
-
-    pub fn get_name(&self) -> String {
-        self.name.clone()
-    }
-}
-*/
