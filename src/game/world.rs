@@ -7,7 +7,7 @@ use game::ContentId;
 use game::entity::{Entity, UID, EEntityType, EntityController};
 use std::sync::mpsc::{Receiver, Sender, SyncSender};
 use content::load_content::{EContentRequestType, EContentRequestResult};
-use graphics::render_thread::RenderFrame;
+use graphics::renderer::RenderFrame;
 use glutin::VirtualKeyCode;
 use game::Input;
 use game::paddle::{PaddleModel, PaddleController};

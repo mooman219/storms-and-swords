@@ -1,9 +1,9 @@
 use game::entity::{Entity, UID, EEntityType, EntityController};
 use cgmath::{Vector3, Vector2};
 use game::world::World;
-use graphics::render_thread::RenderFrame;
+use graphics::renderer::RenderFrame;
 
-use graphics::BoxRenderData;
+use graphics::square_renderer::SquareRenderData;
 
 pub struct PaddleController {}
 
@@ -103,18 +103,20 @@ impl Entity for PaddleModel {
   }
 
   fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
-      let brd = BoxRenderData {
-        pos: Vector2::new(self.position.x, self.position.y),
-        scale: Vector2::new(self.scale.x, self.scale.y),
-        z_rotation: 0f32,
-        color: [0.8f32, 0.4f32, 0.6f32]
-     };
+      
 
-    if render_frame.boxes.is_none() {
-      render_frame.boxes = Some(vec![brd]);
+      let srd = SquareRenderData {
+          pos: [self.position.x, self.position.y],
+          width: 100.0,
+          height: 100.0,
+          color: [0.8, 0.6, 0.7]
+      };
+
+    if render_frame.sqaures.is_none() {
+      render_frame.sqaures = Some(vec![srd]);
     }
     else {
-      render_frame.boxes.as_mut().unwrap().push(brd);
+      render_frame.sqaures.as_mut().unwrap().push(srd);
     }
   }
 }

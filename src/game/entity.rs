@@ -1,5 +1,5 @@
 use game::World;
-use graphics::render_thread::RenderFrame;
+use graphics::renderer::RenderFrame;
 
 
 //it is this large for two reasons, one I want to make sure that we never run out to space, and second so that we can have negative uids for flag varibles

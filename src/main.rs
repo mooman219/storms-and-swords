@@ -1,10 +1,7 @@
 //#![feature(test)]
 
 #[macro_use]
-extern crate gfx;
-extern crate gfx_window_glutin;
 extern crate glutin;
-extern crate gfx_device_gl;
 
 extern crate image;
 extern crate cgmath;
@@ -18,7 +15,6 @@ mod macros;
 
 pub mod game;
 pub mod graphics;
-pub mod graphics_new;
 pub mod math;
 pub mod physics;
 pub mod content;
@@ -32,18 +28,13 @@ use std::thread;
 use content::load_content::{EContentType, EContentRequestType, EContentRequestResult,
                             EContentLoadRequst};
 use content::{ContentManifest, LoadContent};
-use graphics::RenderThread;
-use graphics::render_thread::RenderFrame;
 use game::World;
-use graphics_new::renderer::Renderer;
+use graphics::renderer::{Renderer, RenderFrame};
 
 //буря-engine
 fn main() {
 
-    let mut rend = Renderer::new();
 
-    rend.render();
-    return;
     //let PLEASE = glium::glutin::
     //this is for assets that have been loaded by their threads
     //and then for the content manifest to keep track of them
@@ -116,7 +107,7 @@ fn main() {
         );
     });
 
-    RenderThread::thread_loop(
+    Renderer::render_thread(
         render_thread_render_frame,
         render_thread_asset_request.clone(),
         render_thread_asset_reciver,

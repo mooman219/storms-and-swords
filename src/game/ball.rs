@@ -1,6 +1,6 @@
 use cgmath::Vector2;
-use graphics::sphere_renderer::SphereRenderData;
-use graphics::render_thread::RenderFrame;
+use graphics::circle_renderer::CircleRenderData;
+use graphics::renderer::RenderFrame;
 use game::World;
 use game::entity::{Entity, EntityController, EEntityType, UID};
 
@@ -29,17 +29,25 @@ impl Entity for BallModel {
   }
 
   fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
+  /*
       let srd = SphereRenderData {
           pos: self.pos.clone(),
           scale: 250.0f32,
           color: [1.0f32, 0.4f32, 0.1f32]
       };
+*/
+      let crd = CircleRenderData {
+          pos: [self.pos.x, self.pos.y],
+          width: 100.0,
+          height: 100.0,
+          color: [0.5, 0.6, 0.7]
+      };
 
-      if render_frame.spheres.is_none() {
-          render_frame.spheres = Some(vec![srd]);
+      if render_frame.circles.is_none() {
+          render_frame.circles = Some(vec![crd]);
       }
       else {
-          render_frame.spheres.as_mut().unwrap().push(srd);
+          render_frame.circles.as_mut().unwrap().push(crd);
       }
   }
 

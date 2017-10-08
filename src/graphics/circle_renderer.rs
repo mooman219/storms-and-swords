@@ -1,12 +1,13 @@
 use gl;
 use gl::types::*;
-use graphics_new::shaders::Shaders;
+use graphics::shaders::Shaders;
 use std::str;
 use std::mem;
 use std::ptr;
 use std::ffi::CString;
-use graphics_new::renderer::Renderer;
+use graphics::renderer::Renderer;
 
+#[derive(Clone)]
 pub struct CircleRenderData {
      pub pos: [GLfloat;2],
      pub height: GLfloat,
@@ -57,7 +58,7 @@ impl CircleRenderer {
     }
 
     pub fn render(&mut self, Circles: &Vec<CircleRenderData>, main_renderer: &Renderer)  {
-
+        
         let mut vertex_array: Vec<GLfloat>      = vec![];
         let mut  index_array: Vec<GLuint>       = vec![];
         let mut  color_array: Vec<[GLfloat; 3]> = vec![];

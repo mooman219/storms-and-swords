@@ -1,12 +1,13 @@
 use gl;
 use gl::types::*;
-use graphics_new::shaders::Shaders;
+use graphics::shaders::Shaders;
 use std::str;
 use std::mem;
 use std::ptr;
 use std::ffi::CString;
-use graphics_new::renderer::Renderer;
+use graphics::renderer::Renderer;
 
+#[derive(Clone)]
 pub struct SquareRenderData {
      pub pos: [GLfloat;2],
      pub height: GLfloat,
