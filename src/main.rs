@@ -10,6 +10,7 @@ extern crate image;
 extern crate cgmath;
 //extern crate test;
 extern crate threadpool;
+extern crate gl;
 
 
 #[macro_use]
@@ -17,9 +18,11 @@ mod macros;
 
 pub mod game;
 pub mod graphics;
+pub mod graphics_new;
 pub mod math;
 pub mod physics;
 pub mod content;
+
 pub mod frame_timer;
 
 use std::sync::mpsc::{Sender, Receiver, sync_channel, SyncSender};
@@ -32,9 +35,15 @@ use content::{ContentManifest, LoadContent};
 use graphics::RenderThread;
 use graphics::render_thread::RenderFrame;
 use game::World;
+use graphics_new::renderer::Renderer;
 
-//&буря-engine
+//буря-engine
 fn main() {
+
+    let mut rend = Renderer::new();
+
+    rend.render();
+    return;
     //let PLEASE = glium::glutin::
     //this is for assets that have been loaded by their threads
     //and then for the content manifest to keep track of them

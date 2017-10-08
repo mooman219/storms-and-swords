@@ -30,7 +30,6 @@ impl EntityController for PaddleController {
                 },
             };
 
-
             let test = unsafe {&mut *(test as *mut &Entity as *mut &mut PaddleModel)};
             let pos_x = test.get_position().x;
 

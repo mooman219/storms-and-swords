@@ -28,7 +28,7 @@ gfx_defines!{
         perp: gfx::ConstantBuffer<Transform> = "Pro",
         out: gfx::BlendTarget<ColorFormat> = ("Target0", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
     }
-} 
+}
 
 #[derive(Clone)]
 pub struct BoxRenderData {
