@@ -5,6 +5,7 @@ use std::str;
 use std::mem;
 use std::ptr;
 use std::ffi::CString;
+use graphics_new::renderer::Renderer;
 
 pub struct CircleRenderData {
      pub pos: [GLfloat;2],
@@ -55,7 +56,7 @@ impl CircleRenderer {
         }
     }
 
-    pub fn render(&mut self, Circles: &Vec<CircleRenderData>)  {
+    pub fn render(&mut self, Circles: &Vec<CircleRenderData>, main_renderer: &Renderer)  {
 
         let mut vertex_array: Vec<GLfloat>      = vec![];
         let mut  index_array: Vec<GLuint>       = vec![];
@@ -67,10 +68,10 @@ impl CircleRenderer {
         for crd in Circles {
             vertex_array.extend(
                 &[
-                    -0.5 + crd.pos[0],  0.5 + crd.pos[1],
-                     0.5 + crd.pos[0],  0.5 + crd.pos[1],
-                    -0.5 + crd.pos[0], -0.5 + crd.pos[1],
-                     0.5 + crd.pos[0], -0.5 + crd.pos[1]
+                    (-0.5 * crd.width) + crd.pos[0],  ( 0.5 * crd.height) + crd.pos[1],
+                    ( 0.5 * crd.width) + crd.pos[0],  ( 0.5 * crd.height) + crd.pos[1],
+                    (-0.5 * crd.width) + crd.pos[0],  (-0.5 * crd.height) + crd.pos[1],
+                    ( 0.5 * crd.width) + crd.pos[0],  (-0.5 * crd.height) + crd.pos[1]
                 ]
             );
 
@@ -103,13 +104,17 @@ impl CircleRenderer {
         unsafe {
             gl::UseProgram(self.shader_program);
             gl::BindFragDataLocation(self.shader_program, 0, CString::new("out_color").unwrap().as_ptr());
+            
+            let matrix_id = gl::GetUniformLocation(self.shader_program, CString::new("ortho").unwrap().as_ptr());
+            gl::UniformMatrix4fv(matrix_id, 1, gl::FALSE as GLboolean, &main_renderer.ortho_matrix.x[0] as *const f32);
         }
 
         //fill buffers
         unsafe {
+
             //our vertices
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vertex_buffer);
-            gl::BufferData(gl::ARRAY_BUFFER, 
+            gl::BufferData(gl::ARRAY_BUFFER,
                         (vertex_array.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
                         mem::transmute(vertex_array.as_ptr()),
                         gl::STATIC_DRAW);
@@ -149,7 +154,6 @@ impl CircleRenderer {
                                     gl::FALSE as GLboolean,
                                     0,
                                     ptr::null());
-
             //the index buffer
             gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.index_buffer);
             gl::BufferData(gl::ELEMENT_ARRAY_BUFFER,
@@ -158,8 +162,15 @@ impl CircleRenderer {
                         gl::STATIC_DRAW);
 
 
-            gl::DrawElements(gl::TRIANGLE_STRIP, index_array.len() as i32, gl::UNSIGNED_INT, ptr::null());
-
+            gl::DrawElements(gl::TRIANGLES, index_array.len() as i32, gl::UNSIGNED_INT, ptr::null());
+            
+            //the vertex info
+            gl::DisableVertexAttribArray(0);
+            //the color info
+            gl::DisableVertexAttribArray(1);
+            //the uv info
+            gl::DisableVertexAttribArray(2);
+        
         }
 
 

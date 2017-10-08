@@ -10,5 +10,5 @@ out vec4 v_Color;
 
 void main() {
     v_Color = vec4(color, 1.0);
-    gl_Position = ortho * vec4(a_Pos, 0.0, 1.0);//u_prop * vec4(a_Pos , 0.0, 1.0);
+    gl_Position = ortho * vec4(a_Pos, 0.0, 1.0);
 }

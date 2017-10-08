@@ -5,6 +5,7 @@ use std::str;
 use std::mem;
 use std::ptr;
 use std::ffi::CString;
+use graphics_new::renderer::Renderer;
 
 pub struct SquareRenderData {
      pub pos: [GLfloat;2],
@@ -50,7 +51,7 @@ impl SquareRenderer {
         }
     }
 
-    pub fn render(&mut self, sqaures: &Vec<SquareRenderData>)  {
+    pub fn render(&mut self, sqaures: &Vec<SquareRenderData>, main_renderer: &Renderer)  {
 
         let mut vertex_array: Vec<GLfloat> = vec![];
         let mut index_array: Vec<GLuint> = vec![];
@@ -60,10 +61,10 @@ impl SquareRenderer {
         for sqd in sqaures {
             vertex_array.extend(
                 &[
-                    -0.5 + sqd.pos[0],  0.5 + sqd.pos[1],
-                     0.5 + sqd.pos[0],  0.5 + sqd.pos[1],
-                    -0.5 + sqd.pos[0], -0.5 + sqd.pos[1],
-                     0.5 + sqd.pos[0], -0.5 + sqd.pos[1]
+                    (-0.5 * sqd.width) + sqd.pos[0],  (-0.5 * sqd.height) + sqd.pos[1],
+                    ( 0.5 * sqd.width) + sqd.pos[0],  (-0.5 * sqd.height) + sqd.pos[1],
+                    (-0.5 * sqd.width) + sqd.pos[0],  ( 0.5 * sqd.height) + sqd.pos[1],
+                    ( 0.5 * sqd.width) + sqd.pos[0],  ( 0.5 * sqd.height) + sqd.pos[1]
                 ]
             );
 
@@ -88,6 +89,9 @@ impl SquareRenderer {
         unsafe {
             gl::UseProgram(self.shader_program);
             gl::BindFragDataLocation(self.shader_program, 0, CString::new("out_color").unwrap().as_ptr());
+            
+            let matrix_id = gl::GetUniformLocation(self.shader_program, CString::new("ortho").unwrap().as_ptr());
+            gl::UniformMatrix4fv(matrix_id, 1, gl::FALSE as GLboolean, &main_renderer.ortho_matrix.x[0] as *const f32);
         }
 
         //fill buffers
@@ -125,7 +129,7 @@ impl SquareRenderer {
                         mem::transmute(index_array.as_ptr()),
                         gl::STATIC_DRAW);
 
-            gl::DrawElements(gl::TRIANGLE_STRIP, index_array.len() as i32, gl::UNSIGNED_INT, ptr::null());
+            gl::DrawElements(gl::TRIANGLES, index_array.len() as i32, gl::UNSIGNED_INT, ptr::null());
 
         }
 

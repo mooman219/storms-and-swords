@@ -1,6 +1,9 @@
 use gl;
 use gl::types::*;
 
+use cgmath::{Matrix4, ortho};
+use std::ffi::CString;
+
 use glutin;
 use glutin::GlContext;
 
@@ -10,17 +13,18 @@ use graphics_new::circle_renderer::{CircleRenderData, CircleRenderer};
 
 
 pub struct Renderer {
-
+    pub ortho_matrix: Matrix4<GLfloat>
 }
 
 impl Renderer {
     pub fn new() -> Renderer {
         Renderer{
-
+            ortho_matrix: ortho(-600.0f32, 600.0f32, -400.0f32, 400.0f32, 0.0, 10.0)
         }
     }
 
     pub fn render(self) {
+        
         let mut frame_timer: FrameTimer = FrameTimer::new();
         let mut events_loop = glutin::EventsLoop::new();
 
@@ -29,20 +33,27 @@ impl Renderer {
         let gl_window = glutin::GlWindow::new(window, context, &events_loop).unwrap();
         
         let mut srd = SquareRenderData{
-            pos:[ 0.0, 0.0],
-            height: 1.0,
-            width: 1.0,
+            pos:[ -300.0, 0.0],
+            height: 200.0,
+            width: 100.0,
             color: [0.4,0.5,0.7]
         };
 
-        let mut crd = CircleRenderData {
-            pos: [0.0, 0.0],
-            height: 1.0, 
-            width:1.0,
-            color: [0.8, 0.2, 0.7]
+        let mut srd_2 = SquareRenderData{
+            pos:[ 300.0, 0.0],
+            height: 200.0,
+            width: 100.0,
+            color: [0.7,0.5,0.4]
         };
 
-        let foo = vec![srd];
+        let crd = CircleRenderData {
+            pos: [0.0, 0.0],
+            height: 100.0, 
+            width: 100.0,
+            color: [0.3, 0.4, 0.9]
+        };
+        
+        let foo = vec![srd_2, srd];
         let bar = vec![crd];
 
         unsafe {
@@ -54,6 +65,12 @@ impl Renderer {
         
         let mut vao = 0;
         unsafe {
+            /*
+            let mut ver = gl::GetString(gl::SHADING_LANGUAGE_VERSION);
+            
+            println!("{:?}", *ver);
+            */
+
             gl::GenVertexArrays(1, &mut vao);   
             gl::BindVertexArray(vao);      
             gl::Enable(gl::BLEND);
@@ -61,8 +78,8 @@ impl Renderer {
         
         }
 
-        let square = SquareRenderer::new();
-        let mut circle = CircleRenderer::new();
+        let mut square = SquareRenderer::new();
+      //  let mut circle = CircleRenderer::new();
 
         events_loop.run_forever(|event|{
 
@@ -79,8 +96,9 @@ impl Renderer {
             unsafe {           
                 gl::ClearColor(0.0, 0.0, 0.0, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT);
-             //   Square.render(&foo);
-                  circle.render(&bar);
+                square.render(&foo, &self);
+                
+             //     circle.render(&bar, &self);
             };
 
             let _ = gl_window.swap_buffers();
