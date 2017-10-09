@@ -9,3 +9,4 @@ glutin = "0.9"
 cgmath = "*"
 threadpool = "*"
 gl = "*"
+frame_timer = {git = "https://github.com/TuckerBMorgan/FrameTimer"}

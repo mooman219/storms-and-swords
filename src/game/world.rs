@@ -96,7 +96,7 @@ impl<'a> World<'a> {
         self.entity_controllers.insert(EEntityType::BALL, &BallController {});
 
         let ball_model = BallModel::new(self.get_uid());
-        //  self.add_entity(Box::new(ball_model));
+        self.add_entity(Box::new(ball_model));
 
         let mut paddle_model_1 = PaddleModel::new(self.get_uid());
         paddle_model_1.set_position(Vector3::new(200.0f32, 0.0f32, 0.0f32));

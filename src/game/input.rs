@@ -25,7 +25,7 @@ impl Input {
         true
     }
 
-    pub fn get_key_down(&self, key_code: EKeyCode) -> bool {
+    pub fn get_key_down(&self, _key_code: EKeyCode) -> bool {
         return true;
     }
 }

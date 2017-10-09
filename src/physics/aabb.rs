@@ -32,7 +32,7 @@ impl AABB2D {
         }
 
         let mut res = mov; // Copy
-        let mut aabb = self; // Copy
+        let aabb = self; // Copy
 
         // Y movement
 

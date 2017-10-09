@@ -21,7 +21,7 @@ pub struct SpriteRenderer {
     index_buffer: GLuint,
     uv_buffer: GLuint,
     color_buffer: GLuint,
-    texture_buffer: GLuint,
+    _texture_buffer: GLuint,
 }
 
 impl SpriteRenderer {
@@ -57,7 +57,7 @@ impl SpriteRenderer {
             index_buffer: index_buffer,
             uv_buffer: uv_buffer,
             color_buffer: color_buffer,
-            texture_buffer: texture_buffer
+            _texture_buffer: texture_buffer
         }
     }
 

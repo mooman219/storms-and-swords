@@ -5,6 +5,7 @@ use image;
 use image::DynamicImage;
 use threadpool::ThreadPool;
 use game::ContentId;
+use frame_timer::FrameTimer;
 
 #[derive(Clone)]
 enum ELoadContentErr {
@@ -55,10 +56,11 @@ impl LoadContent {
     }
 
     pub fn thread_loop(mut content_loader: LoadContent) {
-
-        return;
+        let mut frame_timer: FrameTimer = FrameTimer::new();
         loop {
+            frame_timer.frame_start();
             content_loader.inner_thread_loop();
+            frame_timer.frame_end();
         }
 
     }

@@ -57,7 +57,7 @@ impl CircleRenderer {
         }
     }
 
-    pub fn render(&mut self, Circles: &Vec<CircleRenderData>, main_renderer: &Renderer) {
+    pub fn render(&mut self, circles: &Vec<CircleRenderData>, main_renderer: &Renderer) {
 
         let mut vertex_array: Vec<GLfloat> = vec![];
         let mut index_array: Vec<GLuint> = vec![];
@@ -66,7 +66,7 @@ impl CircleRenderer {
 
         let mut count = 0;
 
-        for crd in Circles {
+        for crd in circles {
             vertex_array.extend(&[(-0.5 * crd.width) + crd.pos[0],
                                   (0.5 * crd.height) + crd.pos[1],
                                   (0.5 * crd.width) + crd.pos[0],

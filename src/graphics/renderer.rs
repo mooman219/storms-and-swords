@@ -2,7 +2,6 @@ use gl;
 use gl::types::*;
 
 use cgmath::{Matrix4, ortho};
-use std::ffi::CString;
 use std::collections::HashMap;
 
 use std::sync::mpsc::{Receiver, Sender};
@@ -42,7 +41,7 @@ pub struct Renderer {
     _to_content_manifest: Sender<EContentLoadRequst>,
     _from_content_manifest: Receiver<EContentType>,
     to_game_thread_with_input: Sender<VirtualKeyCode>,
-    sprite_name_to_texture_id: HashMap<String, GLuint>,
+    _sprite_name_to_texture_id: HashMap<String, GLuint>,
 }
 
 impl Renderer {
@@ -57,7 +56,7 @@ impl Renderer {
             _to_content_manifest: to_content_manifest,
             _from_content_manifest: from_content_manifest,
             to_game_thread_with_input: to_game_thread_with_input,
-            sprite_name_to_texture_id: HashMap::new(),
+            _sprite_name_to_texture_id: HashMap::new(),
         }
     }
 
@@ -85,30 +84,6 @@ impl Renderer {
         let context = glutin::ContextBuilder::new();
         let gl_window = glutin::GlWindow::new(window, context, &events_loop).unwrap();
 
-        let mut srd = SquareRenderData {
-            pos: [-300.0, 0.0],
-            height: 200.0,
-            width: 100.0,
-            color: [0.4, 0.5, 0.7],
-        };
-
-        let mut srd_2 = SquareRenderData {
-            pos: [300.0, 0.0],
-            height: 200.0,
-            width: 100.0,
-            color: [0.7, 0.5, 0.4],
-        };
-
-        let crd = CircleRenderData {
-            pos: [0.0, 0.0],
-            height: 100.0,
-            width: 100.0,
-            color: [0.3, 0.4, 0.9],
-        };
-
-        let foo = vec![srd_2, srd];
-        let bar = vec![crd];
-
         unsafe { gl_window.make_current() }.unwrap();
 
         gl::load_with(|symbol| gl_window.get_proc_address(symbol) as *const _);
@@ -116,24 +91,16 @@ impl Renderer {
 
         let mut vao = 0;
         unsafe {
-            /*
-            let mut ver = gl::GetString(gl::SHADING_LANGUAGE_VERSION);
-            
-            println!("{:?}", *ver);
-            */
-
             gl::GenVertexArrays(1, &mut vao);
             gl::BindVertexArray(vao);
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
-
         }
 
         let mut square = SquareRenderer::new();
         let mut circle = CircleRenderer::new();
         let mut running = true;
         while running {
-
 
             frame_timer.frame_start();
 
@@ -161,13 +128,12 @@ impl Renderer {
                 }
             });
 
-
             unsafe {
                 gl::ClearColor(0.0, 0.0, 0.0, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT);
             };
 
-            let mut frame_data = self.from_game_thread.try_recv();
+            let frame_data = self.from_game_thread.try_recv();
 
             let mut frame_data = match frame_data {
                 Ok(data) => Some(data),
@@ -181,7 +147,6 @@ impl Renderer {
                 frame_data = store_frame.clone();
             }
 
-
             if frame_data.is_some() {
                 let frame_data = frame_data.unwrap();
 
@@ -193,8 +158,6 @@ impl Renderer {
                     circle.render(&frame_data.circles.unwrap(), &self);
                 }
             }
-
-
 
             let _ = gl_window.swap_buffers();
 

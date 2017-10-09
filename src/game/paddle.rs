@@ -1,5 +1,5 @@
 use game::entity::{Entity, UID, EEntityType, EntityController};
-use cgmath::{Vector3, Vector2};
+use cgmath::{Vector3};
 use game::world::World;
 use graphics::renderer::RenderFrame;
 

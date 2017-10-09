@@ -1,6 +1,5 @@
 //#![feature(test)]
 
-#[macro_use]
 extern crate glutin;
 
 extern crate image;
@@ -8,6 +7,7 @@ extern crate cgmath;
 //extern crate test;
 extern crate threadpool;
 extern crate gl;
+extern crate frame_timer;
 
 
 #[macro_use]
@@ -19,9 +19,8 @@ pub mod math;
 pub mod physics;
 pub mod content;
 
-pub mod frame_timer;
 
-use std::sync::mpsc::{Sender, Receiver, sync_channel, SyncSender};
+use std::sync::mpsc::{Sender, Receiver, SyncSender};
 use std::sync::mpsc;
 use std::thread;
 
