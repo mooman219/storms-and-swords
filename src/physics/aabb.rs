@@ -25,8 +25,7 @@ impl AABB2D {
     }
 
     pub fn slide<'a, T>(&mut self, mov: Vector2<f32>, others: T)
-    where
-        T: Iterator<Item = &'a AABB2D> + Clone,
+        where T: Iterator<Item = &'a AABB2D> + Clone
     {
         if mov.x == 0f32 && mov.y == 0f32 {
             return;
@@ -40,8 +39,7 @@ impl AABB2D {
         if mov.y < 0f32 {
             for other in others.clone() {
                 if aabb.max.x > other.min.x && aabb.min.x < other.max.x &&
-                    other.max.y <= aabb.min.y
-                {
+                   other.max.y <= aabb.min.y {
                     let min = other.max.y - aabb.min.y;
                     if min > res.y {
                         res.y = min;
@@ -53,8 +51,7 @@ impl AABB2D {
         if mov.y > 0f32 {
             for other in others.clone() {
                 if aabb.max.x > other.min.x && aabb.min.x < other.max.x &&
-                    other.min.y >= aabb.max.y
-                {
+                   other.min.y >= aabb.max.y {
                     let max = other.min.y - aabb.max.y;
                     if max < res.y {
                         res.y = max;
@@ -71,8 +68,7 @@ impl AABB2D {
         if mov.x < 0f32 {
             for other in others.clone() {
                 if aabb.max.y > other.min.y && aabb.min.y < other.max.y &&
-                    other.max.x <= aabb.min.x
-                {
+                   other.max.x <= aabb.min.x {
                     let min = other.max.x - aabb.min.x;
                     if min > res.x {
                         res.x = min;
@@ -84,8 +80,7 @@ impl AABB2D {
         if mov.x > 0f32 {
             for other in others.clone() {
                 if aabb.max.y > other.min.y && aabb.min.y < other.max.y &&
-                    other.min.x >= aabb.max.x
-                {
+                   other.min.x >= aabb.max.x {
                     let max = other.min.x - aabb.max.x;
                     if max < res.x {
                         res.x = max;

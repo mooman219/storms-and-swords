@@ -32,19 +32,18 @@ pub struct World<'a> {
     pub input: Input,
     pub entities: HashMap<UID, &'a Entity>,
     pub type_to_uid_list: HashMap<EEntityType, Vec<UID>>,
-    pub entity_controllers: HashMap<EEntityType, &'a EntityController>
+    pub entity_controllers: HashMap<EEntityType, &'a EntityController>,
 }
 
 impl<'a> World<'a> {
-    pub fn new(
-        to_content_server: Sender<EContentRequestType>,
-        from_cotent_server: Receiver<EContentRequestResult>,
-        to_render_thread: SyncSender<RenderFrame>,
-        from_render_thread_for_input: Receiver<VirtualKeyCode>,
-    ) -> World<'a> {
+    pub fn new(to_content_server: Sender<EContentRequestType>,
+               from_cotent_server: Receiver<EContentRequestResult>,
+               to_render_thread: SyncSender<RenderFrame>,
+               from_render_thread_for_input: Receiver<VirtualKeyCode>)
+               -> World<'a> {
 
         World {
-            uids: 1 as u64,//uids start at 1, because we can use 0 as a flag value, a NULL valye
+            uids: 1 as u64, //uids start at 1, because we can use 0 as a flag value, a NULL valye
             to_content_server: to_content_server,
             from_cotent_server: from_cotent_server,
             to_render_thread: to_render_thread,
@@ -57,19 +56,15 @@ impl<'a> World<'a> {
         }
     }
 
-    pub fn update(
-        to_content_server: Sender<EContentRequestType>,
-        from_cotent_server: Receiver<EContentRequestResult>,
-        to_render_thread: SyncSender<RenderFrame>,
-        from_render_thread_input: Receiver<VirtualKeyCode>,
-    ) {
+    pub fn update(to_content_server: Sender<EContentRequestType>,
+                  from_cotent_server: Receiver<EContentRequestResult>,
+                  to_render_thread: SyncSender<RenderFrame>,
+                  from_render_thread_input: Receiver<VirtualKeyCode>) {
 
-        let world: World = World::new(
-            to_content_server,
-            from_cotent_server,
-            to_render_thread,
-            from_render_thread_input,
-        );
+        let world: World = World::new(to_content_server,
+                                      from_cotent_server,
+                                      to_render_thread,
+                                      from_render_thread_input);
 
         world.inner_update();
 
@@ -80,15 +75,15 @@ impl<'a> World<'a> {
     }
 
     pub fn get_mut_entity(&mut self, uid: UID) -> Option<&mut &'a Entity> {
-      self.entities.get_mut(&uid)
+        self.entities.get_mut(&uid)
     }
     pub fn add_entity(&mut self, entity: Box<Entity>) {
         let entity_type = entity.get_entity_type();
-        if !self.type_to_uid_list.contains_key(&entity_type){
+        if !self.type_to_uid_list.contains_key(&entity_type) {
             self.type_to_uid_list.insert(entity_type, Vec::new());
         }
         self.type_to_uid_list.get_mut(&entity_type).unwrap().push(entity.get_uid());
-        let entity = unsafe {&mut *Box::into_raw(entity)};
+        let entity = unsafe { &mut *Box::into_raw(entity) };
         self.entities.insert(entity.get_uid(), entity);
     }
 
@@ -97,11 +92,11 @@ impl<'a> World<'a> {
 
 
         let mut frame_count = 0 as u64;
-        self.entity_controllers.insert(EEntityType::PADDLE, &PaddleController{});
-        self.entity_controllers.insert(EEntityType::BALL, &BallController{});
+        self.entity_controllers.insert(EEntityType::PADDLE, &PaddleController {});
+        self.entity_controllers.insert(EEntityType::BALL, &BallController {});
 
         let ball_model = BallModel::new(self.get_uid());
-        self.add_entity(Box::new(ball_model));
+        //  self.add_entity(Box::new(ball_model));
 
         let mut paddle_model_1 = PaddleModel::new(self.get_uid());
         paddle_model_1.set_position(Vector3::new(200.0f32, 0.0f32, 0.0f32));
@@ -127,11 +122,11 @@ impl<'a> World<'a> {
             let mut modify_functions = vec![];
 
             for controllers in &self.entity_controllers {
-              modify_functions.push(controllers.1.update(&self));
+                modify_functions.push(controllers.1.update(&self));
             }
 
             for funcs in &modify_functions {
-              funcs.as_ref().unwrap()(&mut self);
+                funcs.as_ref().unwrap()(&mut self);
             }
 
             frame_count = frame_count + 1;
@@ -159,10 +154,9 @@ impl<'a> World<'a> {
         return self.uids;
     }
 
-    pub fn load_content(
-        &self,
-        content: EContentRequestType,
-    ) -> Result<ContentId, ELoadContentError> {
+    pub fn load_content(&self,
+                        content: EContentRequestType)
+                        -> Result<ContentId, ELoadContentError> {
         let _ = self.to_content_server.send(content);
         let result = self.from_cotent_server.recv();
         match result {

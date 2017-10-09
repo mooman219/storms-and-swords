@@ -14,29 +14,33 @@ impl PaddleController {
 }
 
 impl EntityController for PaddleController {
-   fn update(&self, _world: &World) -> Option<Box<Fn(&mut World)>> {
+    fn update(&self, _world: &World) -> Option<Box<Fn(&mut World)>> {
 
         let return_closure = move |inner_world: &mut World| {
-          let uid_list = inner_world.type_to_uid_list[&EEntityType::PADDLE].clone();
 
-          for uid in uid_list {
+            if !inner_world.type_to_uid_list.contains_key(&EEntityType::PADDLE) {
+                return;
+            }
+            let uid_list = inner_world.type_to_uid_list[&EEntityType::PADDLE].clone();
 
-            let test = inner_world.get_mut_entity(uid);
+            for uid in uid_list {
 
-            let test = match test {
-                Some(val) => val,
-                None => {
-                  return;
-                },
-            };
+                let test = inner_world.get_mut_entity(uid);
 
-            let test = unsafe {&mut *(test as *mut &Entity as *mut &mut PaddleModel)};
-            let pos_x = test.get_position().x;
+                let test = match test {
+                    Some(val) => val,
+                    None => {
+                        return;
+                    }
+                };
 
-           test.set_position(Vector3::new(pos_x + 0.01f32, 0.0f32, 0.0f32));
+                let test = unsafe { &mut *(test as *mut &Entity as *mut &mut PaddleModel) };
+                let pos_x = test.get_position().x;
 
+                test.set_position(Vector3::new(pos_x + 0.0001f32, 0.0f32, 0.0f32));
+
+            }
         };
-      };
 
         return Some(Box::new(return_closure));
     }
@@ -77,7 +81,9 @@ impl PaddleModel {
     }
 
     pub fn set_scale(&mut self, new_scale: Vector3<f32>) {
-        self.scale = Vector3::new(new_scale.x * 1000f32, new_scale.y * 1000f32, new_scale.z * 1000f32);
+        self.scale = Vector3::new(new_scale.x * 1000f32,
+                                  new_scale.y * 1000f32,
+                                  new_scale.z * 1000f32);
     }
 
     pub fn get_scale(&self) -> Vector3<f32> {
@@ -94,29 +100,28 @@ impl PaddleModel {
 }
 
 impl Entity for PaddleModel {
-  fn get_entity_type(&self) -> EEntityType {
-    EEntityType::PADDLE
-  }
-
-  fn get_uid(&self) -> UID {
-    self.uid
-  }
-
-  fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
-      
-
-      let srd = SquareRenderData {
-          pos: [self.position.x, self.position.y],
-          width: 100.0,
-          height: 100.0,
-          color: [0.8, 0.6, 0.7]
-      };
-
-    if render_frame.sqaures.is_none() {
-      render_frame.sqaures = Some(vec![srd]);
+    fn get_entity_type(&self) -> EEntityType {
+        EEntityType::PADDLE
     }
-    else {
-      render_frame.sqaures.as_mut().unwrap().push(srd);
+
+    fn get_uid(&self) -> UID {
+        self.uid
     }
-  }
+
+    fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
+
+
+        let srd = SquareRenderData {
+            pos: [self.position.x, self.position.y],
+            width: 100.0,
+            height: 100.0,
+            color: [0.8, 0.6, 0.7],
+        };
+
+        if render_frame.sqaures.is_none() {
+            render_frame.sqaures = Some(vec![srd]);
+        } else {
+            render_frame.sqaures.as_mut().unwrap().push(srd);
+        }
+    }
 }

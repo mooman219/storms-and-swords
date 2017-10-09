@@ -4,13 +4,11 @@ use std::ptr;
 use std::str;
 use std::ffi::CString;
 
-pub struct Shaders {
-
-}
+pub struct Shaders {}
 
 
 impl Shaders {
-    pub fn compile_shader(src: &str, ty: GLenum) -> GLuint{
+    pub fn compile_shader(src: &str, ty: GLenum) -> GLuint {
         let shader;
         unsafe {
             shader = gl::CreateShader(ty);
@@ -26,9 +24,13 @@ impl Shaders {
                 gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, &mut len);
                 let mut buf = Vec::with_capacity(len as usize);
                 buf.set_len((len as usize) - 1);
-                gl::GetShaderInfoLog(shader, len, ptr::null_mut(), buf.as_mut_ptr() as *mut GLchar);
+                gl::GetShaderInfoLog(shader,
+                                     len,
+                                     ptr::null_mut(),
+                                     buf.as_mut_ptr() as *mut GLchar);
 
-                panic!("{}", str::from_utf8(&buf).ok().expect("ShaderInfoLog not valid utf8"));
+                panic!("{}",
+                       str::from_utf8(&buf).ok().expect("ShaderInfoLog not valid utf8"));
 
             }
         }
@@ -44,21 +46,21 @@ impl Shaders {
             let mut status = gl::FALSE as GLint;
             gl::GetProgramiv(program, gl::LINK_STATUS, &mut status);
 
-           if status != (gl::TRUE as GLint) {
+            if status != (gl::TRUE as GLint) {
                 let mut len: GLint = 0;
                 gl::GetProgramiv(program, gl::INFO_LOG_LENGTH, &mut len);
                 let mut buf = Vec::with_capacity(len as usize);
                 buf.set_len((len as usize) - 1); // subtract 1 to skip the trailing null character
                 gl::GetProgramInfoLog(program,
-                                    len,
-                                    ptr::null_mut(),
-                                    buf.as_mut_ptr() as *mut GLchar);
+                                      len,
+                                      ptr::null_mut(),
+                                      buf.as_mut_ptr() as *mut GLchar);
                 panic!("{}",
-                    str::from_utf8(&buf)
-                        .ok()
-                        .expect("ProgramInfoLog not valid utf8"));
-           }
-           program
+                       str::from_utf8(&buf)
+                           .ok()
+                           .expect("ProgramInfoLog not valid utf8"));
+            }
+            program
         }
     }
 }

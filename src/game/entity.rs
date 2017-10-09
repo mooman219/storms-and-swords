@@ -12,9 +12,9 @@ pub enum EEntityType {
 }
 
 pub trait Entity {
-  fn get_entity_type(&self) -> EEntityType;
-  fn get_uid(&self) -> UID;
-  fn add_to_render_frame(&self, render_frame: &mut RenderFrame);
+    fn get_entity_type(&self) -> EEntityType;
+    fn get_uid(&self) -> UID;
+    fn add_to_render_frame(&self, render_frame: &mut RenderFrame);
 }
 
 pub trait EntityController {

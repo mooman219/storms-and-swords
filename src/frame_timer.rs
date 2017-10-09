@@ -20,11 +20,11 @@ impl FrameTimer {
         let frame_end = SystemTime::now();
 
         FrameTimer {
-            sixty_frames_per_second_length,
-            frame_duration,
-            sleep_duration,
-            frame_start,
-            frame_end,
+            sixty_frames_per_second_length: sixty_frames_per_second_length,
+            frame_duration: frame_duration,
+            sleep_duration: sleep_duration,
+            frame_start: frame_start,
+            frame_end: frame_end,
         }
     }
 

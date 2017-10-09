@@ -77,20 +77,16 @@ fn main() {
 
 
     let _ = thread::spawn(move || {
-        ContentManifest::thread_loop(
-            content_manifest_asset_receiver,
-            content_manifest_request_fulfillment,
-            content_manifest_fulfillment.clone(),
-        )
+        ContentManifest::thread_loop(content_manifest_asset_receiver,
+                                     content_manifest_request_fulfillment,
+                                     content_manifest_fulfillment.clone())
     });
 
 
     //create a content loader
-    let load_content = LoadContent::new(
-        loading_thread_fulfillment,
-        loading_thread_content_id.clone(),
-        load_subthread_sender.clone(),
-    );
+    let load_content = LoadContent::new(loading_thread_fulfillment,
+                                        loading_thread_content_id.clone(),
+                                        load_subthread_sender.clone());
 
     let _ = thread::spawn(move || { LoadContent::thread_loop(load_content); });
 
@@ -99,18 +95,14 @@ fn main() {
 
 
     let _ = thread::spawn(move || {
-        World::update(
-            game_thread_request,
-            game_thread_content_id,
-            game_thread_render_frame.clone(),
-            game_thread_gets_input,
-        );
+        World::update(game_thread_request,
+                      game_thread_content_id,
+                      game_thread_render_frame.clone(),
+                      game_thread_gets_input);
     });
 
-    Renderer::render_thread(
-        render_thread_render_frame,
-        render_thread_asset_request.clone(),
-        render_thread_asset_reciver,
-        game_input_thread,
-    );
+    Renderer::render_thread(render_thread_render_frame,
+                            render_thread_asset_request.clone(),
+                            render_thread_asset_reciver,
+                            game_input_thread);
 }

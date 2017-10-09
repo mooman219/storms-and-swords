@@ -15,6 +15,6 @@ void main() {
       Target0 = v_Color;
     }
     else {
-        Target0 = vec4(1.0, 0.0, 0.0, 0.0);
+        Target0 = vec4(0.0, 0.0, 0.0, 0.0);
     }
 }
