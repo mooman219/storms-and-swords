@@ -1,4 +1,4 @@
-use cgmath::Vector2;
+use cgmath::*;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct AABB2D {
@@ -14,6 +14,13 @@ impl AABB2D {
         }
     }
 
+    pub fn assign(&mut self, other: &AABB2D) {
+        self.min.x = other.min.x;
+        self.min.y = other.min.y;
+        self.max.x = other.max.x;
+        self.max.y = other.max.y;
+    }
+
     pub fn intersects(&self, other: AABB2D) -> bool {
         if self.max.x < other.min.x || self.min.x > other.max.x {
             return false;
@@ -24,22 +31,19 @@ impl AABB2D {
         true
     }
 
-    pub fn slide<'a, T>(&mut self, mov: Vector2<f32>, others: T)
-        where T: Iterator<Item = &'a AABB2D> + Clone
-    {
+    pub fn slide<'a>(&mut self, mov: &Vector2<f32>, others: &Vec<AABB2D>) {
         if mov.x == 0f32 && mov.y == 0f32 {
             return;
         }
 
-        let mut res = mov; // Copy
-        let aabb = self; // Copy
+        let mut res = *mov; // Copy
+        let mut aabb = *self; // Copy
 
         // Y movement
 
         if mov.y < 0f32 {
-            for other in others.clone() {
-                if aabb.max.x > other.min.x && aabb.min.x < other.max.x &&
-                   other.max.y <= aabb.min.y {
+            for other in others {
+                if aabb.max.x > other.min.x && aabb.min.x < other.max.x && other.max.y <= aabb.min.y {
                     let min = other.max.y - aabb.min.y;
                     if min > res.y {
                         res.y = min;
@@ -49,9 +53,8 @@ impl AABB2D {
         }
 
         if mov.y > 0f32 {
-            for other in others.clone() {
-                if aabb.max.x > other.min.x && aabb.min.x < other.max.x &&
-                   other.min.y >= aabb.max.y {
+            for other in others {
+                if aabb.max.x > other.min.x && aabb.min.x < other.max.x && other.min.y >= aabb.max.y {
                     let max = other.min.y - aabb.max.y;
                     if max < res.y {
                         res.y = max;
@@ -66,9 +69,8 @@ impl AABB2D {
         // X movement
 
         if mov.x < 0f32 {
-            for other in others.clone() {
-                if aabb.max.y > other.min.y && aabb.min.y < other.max.y &&
-                   other.max.x <= aabb.min.x {
+            for other in others {
+                if aabb.max.y > other.min.y && aabb.min.y < other.max.y && other.max.x <= aabb.min.x {
                     let min = other.max.x - aabb.min.x;
                     if min > res.x {
                         res.x = min;
@@ -78,9 +80,8 @@ impl AABB2D {
         }
 
         if mov.x > 0f32 {
-            for other in others.clone() {
-                if aabb.max.y > other.min.y && aabb.min.y < other.max.y &&
-                   other.min.x >= aabb.max.x {
+            for other in others {
+                if aabb.max.y > other.min.y && aabb.min.y < other.max.y && other.min.x >= aabb.max.x {
                     let max = other.min.x - aabb.max.x;
                     if max < res.x {
                         res.x = max;
@@ -91,56 +92,6 @@ impl AABB2D {
 
         aabb.min.x += res.x;
         aabb.max.x += res.x;
+        *self = aabb;
     }
 }
-/*
-#[allow(unused_imports)]
-mod tests {
-    use super::*;
-    use test::*;
-
-    #[test]
-    fn AABB2D_slide_test() {
-        let v = vec![AABB2D::new(2f32, 0f32, 3f32, 1f32), AABB2D::new(0f32, 1f32, 1f32, 2f32)];
-        let mut aabb = AABB2D::new(0f32, 0f32, 1f32, 1f32);
-
-        {
-            let mot = Vector2::new(2f32, 0f32);
-            aabb.slide(mot, v.iter());
-            assert_eq!(aabb, AABB2D::new(1f32, 0f32, 2f32, 1f32));
-        }
-
-        {
-            let mot = Vector2::new(-4f32, 1f32);
-            aabb.slide(mot, v.iter());
-            assert_eq!(aabb, AABB2D::new(1f32, 1f32, 2f32, 2f32));
-        }
-    }
-
-    #[bench]
-    fn bench_test(b: &mut Bencher) {
-        let v = vec![AABB2D::new(2f32, 0f32, 3f32, 1f32),
-                     AABB2D::new(0f32, 1f32, 1f32, 2f32),
-                     AABB2D::new(3f32, 1f32, 4f32, 2f32),
-                     AABB2D::new(1f32, 2f32, 2f32, 3f32),
-
-                     AABB2D::new(2f32, 0f32, 3f32, 1f32),
-                     AABB2D::new(0f32, 1f32, 1f32, 2f32),
-                     AABB2D::new(3f32, 1f32, 4f32, 2f32),
-                     AABB2D::new(1f32, 2f32, 2f32, 3f32)];
-        b.iter(|| {
-            let mut aabb = AABB2D::new(0f32, 0f32, 1f32, 1f32);
-
-            {
-                let mot = black_box(Vector2::new(2f32, 0f32));
-                aabb.slide(mot, v.iter());
-            }
-
-            {
-                let mot = black_box(Vector2::new(-4f32, 1f32));
-                aabb.slide(mot, v.iter());
-            }
-        });
-    }
-}
-*/

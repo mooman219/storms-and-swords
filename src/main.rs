@@ -1,10 +1,11 @@
-//#![feature(test)]
+#![feature(asm, const_fn, const_size_of)]
 
 extern crate glutin;
 
 extern crate image;
 extern crate cgmath;
-//extern crate test;
+#[macro_use]
+extern crate lazy_static;
 extern crate threadpool;
 extern crate gl;
 extern crate frame_timer;

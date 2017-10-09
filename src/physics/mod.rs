@@ -1,4 +1,5 @@
 pub mod aabb;
-pub mod collision;
 
-pub use self::aabb::AABB2D;
+#[allow(unused_imports)]
+#[cfg(test)]
+mod tests;
