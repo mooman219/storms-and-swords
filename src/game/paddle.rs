@@ -1,5 +1,5 @@
 use game::entity::{Entity, UID, EEntityType, EntityController};
-use cgmath::{Vector3};
+use cgmath::Vector3;
 use game::world::World;
 use graphics::renderer::RenderFrame;
 
@@ -18,7 +18,10 @@ impl EntityController for PaddleController {
 
         let return_closure = move |inner_world: &mut World| {
 
-            if !inner_world.type_to_uid_list.contains_key(&EEntityType::PADDLE) {
+            if !inner_world.type_to_uid_list.contains_key(
+                &EEntityType::PADDLE,
+            )
+            {
                 return;
             }
             let uid_list = inner_world.type_to_uid_list[&EEntityType::PADDLE].clone();
@@ -31,7 +34,7 @@ impl EntityController for PaddleController {
                     Some(val) => val,
                     None => {
                         return;
-                    }
+                    },
                 };
 
                 let test = unsafe { &mut *(test as *mut &Entity as *mut &mut PaddleModel) };
@@ -81,9 +84,11 @@ impl PaddleModel {
     }
 
     pub fn set_scale(&mut self, new_scale: Vector3<f32>) {
-        self.scale = Vector3::new(new_scale.x * 1000f32,
-                                  new_scale.y * 1000f32,
-                                  new_scale.z * 1000f32);
+        self.scale = Vector3::new(
+            new_scale.x * 1000f32,
+            new_scale.y * 1000f32,
+            new_scale.z * 1000f32,
+        );
     }
 
     pub fn get_scale(&self) -> Vector3<f32> {

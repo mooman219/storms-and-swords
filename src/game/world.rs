@@ -36,11 +36,12 @@ pub struct World<'a> {
 }
 
 impl<'a> World<'a> {
-    pub fn new(to_content_server: Sender<EContentRequestType>,
-               from_cotent_server: Receiver<EContentRequestResult>,
-               to_render_thread: SyncSender<RenderFrame>,
-               from_render_thread_for_input: Receiver<VirtualKeyCode>)
-               -> World<'a> {
+    pub fn new(
+        to_content_server: Sender<EContentRequestType>,
+        from_cotent_server: Receiver<EContentRequestResult>,
+        to_render_thread: SyncSender<RenderFrame>,
+        from_render_thread_for_input: Receiver<VirtualKeyCode>,
+    ) -> World<'a> {
 
         World {
             uids: 1 as u64, //uids start at 1, because we can use 0 as a flag value, a NULL valye
@@ -56,15 +57,19 @@ impl<'a> World<'a> {
         }
     }
 
-    pub fn update(to_content_server: Sender<EContentRequestType>,
-                  from_cotent_server: Receiver<EContentRequestResult>,
-                  to_render_thread: SyncSender<RenderFrame>,
-                  from_render_thread_input: Receiver<VirtualKeyCode>) {
+    pub fn update(
+        to_content_server: Sender<EContentRequestType>,
+        from_cotent_server: Receiver<EContentRequestResult>,
+        to_render_thread: SyncSender<RenderFrame>,
+        from_render_thread_input: Receiver<VirtualKeyCode>,
+    ) {
 
-        let world: World = World::new(to_content_server,
-                                      from_cotent_server,
-                                      to_render_thread,
-                                      from_render_thread_input);
+        let world: World = World::new(
+            to_content_server,
+            from_cotent_server,
+            to_render_thread,
+            from_render_thread_input,
+        );
 
         world.inner_update();
 
@@ -82,7 +87,9 @@ impl<'a> World<'a> {
         if !self.type_to_uid_list.contains_key(&entity_type) {
             self.type_to_uid_list.insert(entity_type, Vec::new());
         }
-        self.type_to_uid_list.get_mut(&entity_type).unwrap().push(entity.get_uid());
+        self.type_to_uid_list.get_mut(&entity_type).unwrap().push(
+            entity.get_uid(),
+        );
         let entity = unsafe { &mut *Box::into_raw(entity) };
         self.entities.insert(entity.get_uid(), entity);
     }
@@ -92,8 +99,14 @@ impl<'a> World<'a> {
 
 
         let mut frame_count = 0 as u64;
-        self.entity_controllers.insert(EEntityType::PADDLE, &PaddleController {});
-        self.entity_controllers.insert(EEntityType::BALL, &BallController {});
+        self.entity_controllers.insert(
+            EEntityType::PADDLE,
+            &PaddleController {},
+        );
+        self.entity_controllers.insert(
+            EEntityType::BALL,
+            &BallController {},
+        );
 
         let ball_model = BallModel::new(self.get_uid());
         self.add_entity(Box::new(ball_model));
@@ -115,8 +128,8 @@ impl<'a> World<'a> {
             let input_check = self.from_render_thread_for_input.try_recv();
 
             match input_check {
-                Ok(_input_event) => {}
-                Err(_e) => {}
+                Ok(_input_event) => {},
+                Err(_e) => {},
             }
 
             let mut modify_functions = vec![];
@@ -154,9 +167,7 @@ impl<'a> World<'a> {
         return self.uids;
     }
 
-    pub fn load_content(&self,
-                        content: EContentRequestType)
-                        -> Result<ContentId, ELoadContentError> {
+    pub fn load_content(&self, content: EContentRequestType) -> Result<ContentId, ELoadContentError> {
         let _ = self.to_content_server.send(content);
         let result = self.from_cotent_server.recv();
         match result {
@@ -164,12 +175,12 @@ impl<'a> World<'a> {
                 match return_content {
                     EContentRequestResult::Image(id) => {
                         return Ok(id);
-                    }
+                    },
                 }
-            }
+            },
             Err(_) => {
                 return Err(ELoadContentError::LoadThreadNoResponce);
-            }
+            },
         }
     }
 }

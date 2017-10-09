@@ -58,7 +58,10 @@ impl EntityController for BallController {
 
         let return_function = move |inner_world: &mut World| {
 
-            if !inner_world.type_to_uid_list.contains_key(&EEntityType::BALL) {
+            if !inner_world.type_to_uid_list.contains_key(
+                &EEntityType::BALL,
+            )
+            {
                 return;
             };
 
@@ -72,7 +75,7 @@ impl EntityController for BallController {
                     Some(val) => val,
                     None => {
                         return;
-                    }
+                    },
                 };
 
 
