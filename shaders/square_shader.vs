@@ -9,6 +9,6 @@ uniform mat4 ortho;
 out vec4 v_Color;
 
 void main() {
-    v_Color = vec4(color, 1.0);
+    v_Color = vec4(color.r, color.g, color.b, 1.0);
     gl_Position = ortho * vec4(a_Pos, 0.0, 1.0);
 }

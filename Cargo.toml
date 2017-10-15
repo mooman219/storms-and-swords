@@ -10,4 +10,5 @@ cgmath = "*"
 threadpool = "*"
 gl = "*"
 lazy_static = "0.2.8"
-frame_timer = {git = "https://github.com/TuckerBMorgan/FrameTimer"}
+frame_timer = "*"
+rand = "*"

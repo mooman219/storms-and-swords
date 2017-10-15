@@ -14,7 +14,7 @@ impl PaddleController {
 }
 
 impl EntityController for PaddleController {
-    fn update(&self, _world: &World) -> Option<Box<Fn(&mut World)>> {
+    fn update(&self, _world: &World) -> Option<Box<FnOnce(&mut World)>> {
 
         let return_closure = move |inner_world: &mut World| {
 

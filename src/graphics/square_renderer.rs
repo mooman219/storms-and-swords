@@ -62,7 +62,7 @@ impl SquareRenderer {
 
         let mut vertex_array: Vec<GLfloat> = vec![];
         let mut index_array: Vec<GLuint> = vec![];
-        let mut color_array: Vec<[GLfloat; 3]> = vec![];
+        let mut color_array: Vec<GLfloat> = vec![];
         let mut count = 0;
 
         for sqd in sqaures {
@@ -78,8 +78,11 @@ impl SquareRenderer {
                     (0.5 * sqd.height) + sqd.pos[1],
                 ],
             );
-
-            color_array.extend(&[sqd.color, sqd.color, sqd.color, sqd.color]);
+            println!("{:?}", sqd.color);
+            color_array.extend(&[sqd.color[0], sqd.color[1], sqd.color[2], 
+                                 sqd.color[0], sqd.color[1], sqd.color[2], 
+                                 sqd.color[0], sqd.color[1], sqd.color[2], 
+                                 sqd.color[0], sqd.color[1], sqd.color[2]]);
 
             index_array.extend(
                 &[
@@ -135,7 +138,7 @@ impl SquareRenderer {
             gl::BindBuffer(gl::ARRAY_BUFFER, self.color_buffer);
             gl::BufferData(
                 gl::ARRAY_BUFFER,
-                (color_array.len() * mem::size_of::<GLfloat>() * 3) as GLsizeiptr,
+                (color_array.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
                 mem::transmute(color_array.as_ptr()),
                 gl::STATIC_DRAW,
             );

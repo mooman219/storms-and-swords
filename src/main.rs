@@ -1,5 +1,4 @@
-#![feature(asm, const_fn, const_size_of)]
-
+#![feature(asm, const_fn, const_size_of, fn_traits)]
 extern crate glutin;
 
 extern crate cgmath;
@@ -9,7 +8,7 @@ extern crate image;
 #[macro_use]
 extern crate lazy_static;
 extern crate threadpool;
-
+extern crate rand;
 
 #[macro_use]
 mod macros;
@@ -32,6 +31,9 @@ use graphics::renderer::{RenderFrame, Renderer};
 
 //буря-engine
 fn main() {
+
+
+
     //let PLEASE = glium::glutin::
     //this is for assets that have been loaded by their threads
     //and then for the content manifest to keep track of them
@@ -65,7 +67,7 @@ fn main() {
     let (game_input_thread, game_thread_gets_input): (Sender<glutin::VirtualKeyCode>, Receiver<glutin::VirtualKeyCode>) =
         mpsc::channel();
 
-
+    
     let _ = thread::spawn(move || {
         ContentManifest::thread_loop(
             content_manifest_asset_receiver,
@@ -73,7 +75,7 @@ fn main() {
             content_manifest_fulfillment.clone(),
         )
     });
-
+    
 
     //create a content loader
     let load_content = LoadContent::new(
@@ -81,13 +83,13 @@ fn main() {
         loading_thread_content_id.clone(),
         load_subthread_sender.clone(),
     );
-
+    
     let _ = thread::spawn(move || { LoadContent::thread_loop(load_content); });
-
+    
     //create a render loop
 
 
-
+    
     let _ = thread::spawn(move || {
         World::update(
             game_thread_request,
@@ -96,11 +98,15 @@ fn main() {
             game_thread_gets_input,
         );
     });
-
+        
+    
     Renderer::render_thread(
         render_thread_render_frame,
         render_thread_asset_request.clone(),
         render_thread_asset_reciver,
         game_input_thread,
     );
+    
+   
+    
 }

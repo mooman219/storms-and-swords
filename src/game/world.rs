@@ -1,7 +1,6 @@
 use std::boxed::Box;
 use std::collections::HashMap;
 
-use cgmath::Vector3;
 
 use game::ContentId;
 use game::entity::{Entity, UID, EEntityType, EntityController};
@@ -10,9 +9,12 @@ use content::load_content::{EContentRequestType, EContentRequestResult};
 use graphics::renderer::RenderFrame;
 use glutin::VirtualKeyCode;
 use game::Input;
+use game::tetris_block::{TetrisBlockController};
+
+/*
 use game::paddle::{PaddleModel, PaddleController};
 use game::ball::{BallModel, BallController};
-
+*/
 
 use frame_timer::FrameTimer;
 
@@ -23,7 +25,8 @@ pub enum ELoadContentError {
 }
 
 pub struct World<'a> {
-    pub uids: UID,
+    pub entity_uids: UID,
+    pub controller_uid: UID,
     pub to_content_server: Sender<EContentRequestType>,
     pub from_cotent_server: Receiver<EContentRequestResult>,
     pub to_render_thread: SyncSender<RenderFrame>,
@@ -31,8 +34,7 @@ pub struct World<'a> {
     pub test: i32,
     pub input: Input,
     pub entities: HashMap<UID, &'a Entity>,
-    pub type_to_uid_list: HashMap<EEntityType, Vec<UID>>,
-    pub entity_controllers: HashMap<EEntityType, &'a EntityController>,
+    pub type_to_uid_list: HashMap<EEntityType, Vec<UID>>
 }
 
 impl<'a> World<'a> {
@@ -44,7 +46,8 @@ impl<'a> World<'a> {
     ) -> World<'a> {
 
         World {
-            uids: 1 as u64, //uids start at 1, because we can use 0 as a flag value, a NULL valye
+            entity_uids: 1 as u64, //uids start at 1, because we can use 0 as a flag value, a NULL valye
+            controller_uid: 1 as u64,
             to_content_server: to_content_server,
             from_cotent_server: from_cotent_server,
             to_render_thread: to_render_thread,
@@ -53,7 +56,6 @@ impl<'a> World<'a> {
             input: Input::new(),
             entities: HashMap::new(),
             type_to_uid_list: HashMap::new(),
-            entity_controllers: HashMap::new(),
         }
     }
 
@@ -82,6 +84,7 @@ impl<'a> World<'a> {
     pub fn get_mut_entity(&mut self, uid: UID) -> Option<&mut &'a Entity> {
         self.entities.get_mut(&uid)
     }
+
     pub fn add_entity(&mut self, entity: Box<Entity>) {
         let entity_type = entity.get_entity_type();
         if !self.type_to_uid_list.contains_key(&entity_type) {
@@ -99,28 +102,11 @@ impl<'a> World<'a> {
 
 
         let mut frame_count = 0 as u64;
-        self.entity_controllers.insert(
-            EEntityType::PADDLE,
-            &PaddleController {},
-        );
-        self.entity_controllers.insert(
-            EEntityType::BALL,
-            &BallController {},
-        );
-
-        let ball_model = BallModel::new(self.get_uid());
-        self.add_entity(Box::new(ball_model));
-
-        let mut paddle_model_1 = PaddleModel::new(self.get_uid());
-        paddle_model_1.set_position(Vector3::new(200.0f32, 0.0f32, 0.0f32));
-        paddle_model_1.set_scale(Vector3::new(1.0f32, 1.0f32, 0.0f32));
-
-        let mut paddle_model_2 = PaddleModel::new(self.get_uid());
-        paddle_model_2.set_position(Vector3::new(0.0f32, 0.0f32, 0.0f32));
-        paddle_model_2.set_scale(Vector3::new(0.25f32, 1.0f32, 0.0f32));
-
-        self.add_entity(Box::new(paddle_model_1));
-        self.add_entity(Box::new(paddle_model_2));
+        let controller_uid = self.get_uid_for_controller().clone();
+        let mut entity_controllers: HashMap<EEntityType, &mut EntityController> = HashMap::new();
+        let new_tetris_block_controller = TetrisBlockController::new(controller_uid);
+        let controller_store = unsafe{&mut *Box::into_raw(Box::new(new_tetris_block_controller))};
+        entity_controllers.insert(EEntityType::TetrisBlock, controller_store);
 
         loop {
             frame_timer.frame_start();
@@ -133,13 +119,15 @@ impl<'a> World<'a> {
             }
 
             let mut modify_functions = vec![];
+            let mut controllers_type = vec![];
 
-            for controllers in &self.entity_controllers {
-                modify_functions.push(controllers.1.update(&self));
+            for controllers in entity_controllers.keys() {
+                modify_functions.push(entity_controllers.get(controllers).unwrap().update(&self));//actually genreate the functions
+                controllers_type.push(controllers.clone());
             }
 
-            for funcs in &modify_functions {
-                funcs.as_ref().unwrap()(&mut self);
+            for i in 0..modify_functions.len() {
+                modify_functions[i].as_ref().unwrap()(&mut self, *entity_controllers.get_mut(&controllers_type[i]).unwrap());//call all generated functions
             }
 
             frame_count = frame_count + 1;
@@ -162,9 +150,18 @@ impl<'a> World<'a> {
         &self.input
     }
 
-    pub fn get_uid(&mut self) -> UID {
-        self.uids += 1;
-        return self.uids;
+    //entnties (IE those who are creating them) are unable to get uids without also giving the world ownership of that entity
+    pub fn set_uid_for_entity(&mut self, mut entity: Box<Entity>) -> UID{
+        self.entity_uids +=1;
+        entity.set_uid(self.entity_uids);
+        self.add_entity(entity);
+        return self.entity_uids;
+    }
+
+    //calling this for entities is bad, they have two seperate counters for UIDs, and so could clash
+    pub fn get_uid_for_controller(&mut self) -> UID {
+        self.controller_uid += 1;
+        return self.controller_uid;
     }
 
     pub fn load_content(&self, content: EContentRequestType) -> Result<ContentId, ELoadContentError> {

@@ -53,7 +53,7 @@ impl Entity for BallModel {
 pub struct BallController {}
 
 impl EntityController for BallController {
-    fn update(&self, _world: &World) -> Option<Box<Fn(&mut World)>> {
+    fn update(&self, _world: &World) -> Option<Box<FnOnce(&mut World)>> {
 
 
         let return_function = move |inner_world: &mut World| {

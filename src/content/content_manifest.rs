@@ -36,6 +36,7 @@ impl ContentManifest {
             ContentManifest::new(loaded_asset_channel, from_render_thread, to_render_thread);
 
         let mut frame_check = FrameTimer::new();
+        
         loop {
             frame_check.frame_start();
             let possible_new_asset = content_manifest.loaded_asset_channel.try_recv();

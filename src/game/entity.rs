@@ -7,17 +7,20 @@ pub type UID = u64;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum EEntityType {
-    PADDLE,
-    BALL,
+    Paddle,
+    Ball,
+    TetrisBlock
 }
 
 pub trait Entity {
     fn get_entity_type(&self) -> EEntityType;
     fn get_uid(&self) -> UID;
+    fn set_uid(&mut self, uid: UID);
     fn add_to_render_frame(&self, render_frame: &mut RenderFrame);
 }
 
 pub trait EntityController {
-    fn update(&self, world: &World) -> Option<Box<Fn(&mut World)>>;
+    fn update(&self, world: &World) -> Option<Box<Fn(&mut World, &mut EntityController)>>;
     fn get_entity_type(&self) -> EEntityType;
+    fn get_uid(&self) -> UID;
 }
