@@ -53,20 +53,29 @@ impl<'a> EntityController for TetrisBlockController {
             if tbc.current_cluster.len() == 0 {
                 let mut rng = rand::thread_rng();
                 for i in 0..10 {
-                    let tbm = TetrisBlockModel::new(Vector3::new((100.0f32 * (i as f32)) - 450.0f32, 550.0f32, 250.0f32),[color_v.ind_sample(&mut rng), color_v.ind_sample(&mut rng), color_v.ind_sample(&mut rng), 255.0f32], 0u64);
+                    let color : [f32; 4] = [color_v.ind_sample(&mut rng), color_v.ind_sample(&mut rng), color_v.ind_sample(&mut rng), 255.0f32];
+                    let tbm = TetrisBlockModel::new(Vector3::new((100.0f32 * (i as f32)) - 450.0f32, 550.0f32, 250.0f32), color, 0u64);
                     tbc.current_cluster.push(inner_world.set_uid_for_entity(Box::new(tbm)));
                 }
             }
             else {
                 tbc.frame_count = tbc.frame_count + 1u16;
-                if tbc.frame_count == 120u16 {
+                let mut mark_for_drop = false;
+                if tbc.frame_count == 60u16 {
                     for uid in tbc.current_cluster.iter() {
                         let mut tetris_piece = inner_world.get_mut_entity(*uid).unwrap();
                         let mut tetris_piece = unsafe {&mut *(tetris_piece as *mut &Entity as *mut  &mut TetrisBlockModel)};
                         tetris_piece.pos = Vector3::new(tetris_piece.pos.x, tetris_piece.pos.y - 100f32, tetris_piece.pos.z);
-
+                        if tetris_piece.pos.y == -650.0f32 {
+                            mark_for_drop = true;
+                        }
                     }
                     tbc.frame_count = 016;
+
+                }
+
+                if mark_for_drop {
+                    tbc.current_cluster.truncate(0);
                 }
             }
         };

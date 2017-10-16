@@ -49,7 +49,7 @@ impl Renderer {
         to_game_thread_with_input: Sender<VirtualKeyCode>,
     ) -> Renderer {
         Renderer {
-            ortho_matrix: ortho(-500.0f32, 500.0f32, -650.0f32, 650.0f32, 0.0, 10.0),
+            ortho_matrix: ortho(-1000.0f32, 1000.0f32, -1300.0f32, 1300.0f32, 0.0, 10.0),
             from_game_thread: from_game_thread,
             _to_content_manifest: to_content_manifest,
             _from_content_manifest: from_content_manifest,
@@ -83,7 +83,7 @@ impl Renderer {
 
         let window = glutin::WindowBuilder::new()
             .with_title("Storm and Swords")
-            .with_dimensions(800, 1200);
+            .with_dimensions(800, 1000);
         let context = glutin::ContextBuilder::new();
         let gl_window = glutin::GlWindow::new(window, context, &events_loop).unwrap();
 
