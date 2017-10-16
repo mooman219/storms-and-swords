@@ -78,7 +78,7 @@ impl SquareRenderer {
                     (0.5 * sqd.height) + sqd.pos[1],
                 ],
             );
-            println!("{:?}", sqd.color);
+            
             color_array.extend(&[sqd.color[0], sqd.color[1], sqd.color[2], 
                                  sqd.color[0], sqd.color[1], sqd.color[2], 
                                  sqd.color[0], sqd.color[1], sqd.color[2], 

@@ -49,7 +49,7 @@ impl Renderer {
         to_game_thread_with_input: Sender<VirtualKeyCode>,
     ) -> Renderer {
         Renderer {
-            ortho_matrix: ortho(-450.0f32, 450.0f32, -600.0f32, 600.0f32, 0.0, 10.0),
+            ortho_matrix: ortho(-500.0f32, 500.0f32, -650.0f32, 650.0f32, 0.0, 10.0),
             from_game_thread: from_game_thread,
             _to_content_manifest: to_content_manifest,
             _from_content_manifest: from_content_manifest,

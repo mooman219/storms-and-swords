@@ -5,6 +5,7 @@ use graphics::renderer::RenderFrame;
 use graphics::square_renderer::SquareRenderData;
 use rand::Rng;
 use rand;
+use rand::distributions::{IndependentSample, Range};
 
 pub enum TetrominoType {
     Line,
@@ -18,6 +19,7 @@ pub enum TetrominoType {
 pub struct TetrisBlockController {
     pub uid: UID,
     pub current_cluster: Vec<UID>,
+    pub frame_count: u16,
 }
 
 impl<'a>TetrisBlockController {
@@ -25,7 +27,8 @@ impl<'a>TetrisBlockController {
     pub fn new(uid: UID) -> TetrisBlockController {
         TetrisBlockController {
             uid,
-            current_cluster: vec![]
+            current_cluster: vec![],
+            frame_count: 0u16
         }
     }
 
@@ -45,13 +48,25 @@ impl<'a> EntityController for TetrisBlockController {
     fn update(&self, _world: &World) ->  Option<Box<Fn(&mut World, &mut EntityController)>> {
 
          let return_closure = move |inner_world: &mut World, controller: &mut EntityController| {
-      
+            let color_v = Range::new(0.0f32, 1.0f32);
             let tbc =  unsafe { &mut *(controller as *mut EntityController as *mut TetrisBlockController) };
             if tbc.current_cluster.len() == 0 {
                 let mut rng = rand::thread_rng();
                 for i in 0..10 {
-                    let tbm = TetrisBlockModel::new(Vector3::new((100.0f32 * (i as f32)) - 450.0f32, 0.0f32, 250.0f32),[250.0f32 * rng.next_f32(), 250.0f32 * rng.next_f32(), 250.0f32 * rng.next_f32(), 255.0f32], 0u64);
+                    let tbm = TetrisBlockModel::new(Vector3::new((100.0f32 * (i as f32)) - 450.0f32, 550.0f32, 250.0f32),[color_v.ind_sample(&mut rng), color_v.ind_sample(&mut rng), color_v.ind_sample(&mut rng), 255.0f32], 0u64);
                     tbc.current_cluster.push(inner_world.set_uid_for_entity(Box::new(tbm)));
+                }
+            }
+            else {
+                tbc.frame_count = tbc.frame_count + 1u16;
+                if tbc.frame_count == 120u16 {
+                    for uid in tbc.current_cluster.iter() {
+                        let mut tetris_piece = inner_world.get_mut_entity(*uid).unwrap();
+                        let mut tetris_piece = unsafe {&mut *(tetris_piece as *mut &Entity as *mut  &mut TetrisBlockModel)};
+                        tetris_piece.pos = Vector3::new(tetris_piece.pos.x, tetris_piece.pos.y - 100f32, tetris_piece.pos.z);
+
+                    }
+                    tbc.frame_count = 016;
                 }
             }
         };
