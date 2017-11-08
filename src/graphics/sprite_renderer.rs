@@ -77,15 +77,17 @@ impl SpriteRenderer {
         let mut count = 0;
 
         for crd in sprites {
-            //    x                                     y
             vertex_array.extend(
                 &[
-                    (-0.5 * crd.width) + crd.pos[0],
-                    (0.5 * crd.height) + crd.pos[1],
+                    (-0.5 * crd.width) + crd.pos[0],//x
+                    (0.5 * crd.height) + crd.pos[1],//y
+
                     (0.5 * crd.width) + crd.pos[0],
                     (0.5 * crd.height) + crd.pos[1],
+
                     (-0.5 * crd.width) + crd.pos[0],
                     (-0.5 * crd.height) + crd.pos[1],
+
                     (0.5 * crd.width) + crd.pos[0],
                     (-0.5 * crd.height) + crd.pos[1],
                 ],

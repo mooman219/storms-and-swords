@@ -44,6 +44,7 @@ impl SquareRenderer {
         let mut vertex_buffer = 0;
         let mut index_buffer = 0;
         let mut color_buffer = 0;
+        
         unsafe {
             gl::GenBuffers(1, &mut vertex_buffer);
             gl::GenBuffers(1, &mut index_buffer);
