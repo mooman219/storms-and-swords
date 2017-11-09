@@ -218,8 +218,6 @@ impl EntityController for TetrisBlockController {
 
                             if are_clear {
 
-
-
                                 let old_poses = tbc.current_cluster_pos.clone();
                                 tbc.current_cluster_pos.truncate(0);
                                 
@@ -236,13 +234,9 @@ impl EntityController for TetrisBlockController {
                                     let tetris_piece = inner_world.get_mut_entity(k.0).unwrap();
                                     let tetris_piece = unsafe {&mut *(tetris_piece as *mut &Entity as *mut  &mut TetrisBlockModel)};
                                     tetris_piece.pos = Vector3::new(tetris_piece.pos.x, tetris_piece.pos.y - 100f32, tetris_piece.pos.z);
-                      //              tbc.tetris_frame[(k.1).1 as usize][(k.1).0 as usize] = None;
                                     tbc.tetris_frame[(k.1).1 as usize + 1][(k.1).0 as usize] = Some(k.0);
                                     tbc.current_cluster_pos.push(((k.1).0, (k.1).1 + 1));
                                 }
-
-
-
                             }
                             else {
                                 tbc.finish_with_current_cluster();
