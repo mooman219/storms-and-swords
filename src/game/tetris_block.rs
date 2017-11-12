@@ -132,6 +132,51 @@ impl<'a>TetrisBlockController {
             spawn_pos: (5, 0)
         }
     }
+
+    /*
+    let old_poses = tbc.current_cluster_pos.clone();
+    tbc.current_cluster_pos.truncate(0);
+    
+    let old_frame = tbc.tetris_frame.clone();
+    let mut use_uids = vec![];
+
+    for pos in &old_poses {
+        let uid = old_frame[pos.1 as usize][pos.0 as usize].unwrap();
+        tbc.tetris_frame[pos.1 as usize][pos.0 as usize] = None;
+        use_uids.push((uid, pos));
+    }
+
+    for k in use_uids.iter() {
+        let tetris_piece = inner_world.get_mut_entity(k.0).unwrap();
+        let tetris_piece = unsafe {&mut *(tetris_piece as *mut &Entity as *mut  &mut TetrisBlockModel)};
+        tetris_piece.pos = Vector3::new(tetris_piece.pos.x, tetris_piece.pos.y - 100f32, tetris_piece.pos.z);
+        tbc.tetris_frame[(k.1).1 as usize + 1][(k.1).0 as usize] = Some(k.0);
+        tbc.current_cluster_pos.push(((k.1).0, (k.1).1 + 1));
+    }
+    */
+
+    pub fn update_current_cluster(&mut self, inner_world: &mut World) {
+        let old_poses = self.current_cluster_pos.clone();
+        self.current_cluster_pos.truncate(0);
+
+        let old_frame = self.tetris_frame.clone();
+        let mut use_uids = vec![];
+
+        for pos in &old_poses {
+            let uid = old_frame[pos.1 as usize][pos.0 as usize].unwrap();
+            self.tetris_frame[pos.1 as usize][pos.0 as usize] = None;
+            use_uids.push((uid, pos));
+        }
+
+        for uids_and_pos in use_uids.iter() {
+          //  let (uid, pos) = uids_and_pos;
+          let tetris_piece = inner_world.get_mut_entity(uids_and_pos.0).unwrap();
+          let tetris_piece = unsafe{&mut *(tetris_piece as *mut &Entity as *mut &mut TetrisBlockModel)};
+          tetris_piece.pos = Vector3::new(tetris_piece.pos.x, tetris_piece.pos.y - 100f32, tetris_piece.pos.z);
+          self.tetris_frame[(uids_and_pos.1).1 as usize + 1][(uids_and_pos.1).0 as usize] = Some(uids_and_pos.0);
+          self.current_cluster_pos.push(((uids_and_pos.1).0, (uids_and_pos.1).1 + 1));
+        }
+    }
   
     pub fn genererate_and_place_next_tetris_block(&mut self, inner_world: &mut World){
 
@@ -146,7 +191,7 @@ impl<'a>TetrisBlockController {
                                 255.0f32];//a
 
         for offset in offsets {
-            let pos = Vector3::new(100.0f32 * (offset.0 as f32), 550f32 - (100f32 * -offset.1 as f32), 250f32);
+            let pos = Vector3::new(100.0f32 * (offset.0 as f32), 950f32 + (100f32 * -(offset.1 as f32)), 250f32);
             let tbm = TetrisBlockModel::new(pos, color, 0u64);
             let new_uid = inner_world.set_uid_for_entity(Box::new(tbm));
             self.tetris_frame[(self.spawn_pos.1 + offset.1) as usize][(self.spawn_pos.0 + offset.0) as usize] = Some(new_uid);
@@ -203,13 +248,12 @@ impl EntityController for TetrisBlockController {
                 tbc.genererate_and_place_next_tetris_block(inner_world);
             }
             else {
-                
                 tbc.frame_count = tbc.frame_count + 1u16;
 
                 if tbc.frame_count == 60u16 {
 
                     let next_pos = tbc.generate_next_positions_for_cluster();
-
+ 
                     match next_pos {
                         Some(next_pos) => {
 
@@ -217,39 +261,19 @@ impl EntityController for TetrisBlockController {
                             
 
                             if are_clear {
-
-                                let old_poses = tbc.current_cluster_pos.clone();
-                                tbc.current_cluster_pos.truncate(0);
+                                tbc.update_current_cluster(inner_world);
                                 
-                                let old_frame = tbc.tetris_frame.clone();
-                                let mut use_uids = vec![];
-
-                                for pos in &old_poses {
-                                    let uid = old_frame[pos.1 as usize][pos.0 as usize].unwrap();
-                                    tbc.tetris_frame[pos.1 as usize][pos.0 as usize] = None;
-                                    use_uids.push((uid, pos));
-                                }
-
-                                for k in use_uids.iter() {
-                                    let tetris_piece = inner_world.get_mut_entity(k.0).unwrap();
-                                    let tetris_piece = unsafe {&mut *(tetris_piece as *mut &Entity as *mut  &mut TetrisBlockModel)};
-                                    tetris_piece.pos = Vector3::new(tetris_piece.pos.x, tetris_piece.pos.y - 100f32, tetris_piece.pos.z);
-                                    tbc.tetris_frame[(k.1).1 as usize + 1][(k.1).0 as usize] = Some(k.0);
-                                    tbc.current_cluster_pos.push(((k.1).0, (k.1).1 + 1));
-                                }
                             }
                             else {
                                 tbc.finish_with_current_cluster();
                             }
-
-                            tbc.frame_count = 016;
                         }
                         None => {
                             //in this case we can assume that a generated position is out of bounds, so we just stop the movmenet
                             tbc.finish_with_current_cluster();
                         }
                     }
-
+                    tbc.frame_count = 016;
                 }
             }
         };

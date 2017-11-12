@@ -139,7 +139,7 @@ impl Renderer {
             });
 
             unsafe {
-                gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+                gl::ClearColor(0.16, 0.5, 0.72, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT);
             };
 
