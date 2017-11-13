@@ -1,7 +1,7 @@
 use std::boxed::Box;
 use std::collections::HashMap;
 
-
+use glutin;
 use game::ContentId;
 use game::entity::{Entity, UID, EEntityType, EntityController};
 use std::sync::mpsc::{Receiver, Sender, SyncSender};
@@ -30,11 +30,13 @@ pub struct World<'a> {
     pub to_content_server: Sender<EContentRequestType>,
     pub from_cotent_server: Receiver<EContentRequestResult>,
     pub to_render_thread: SyncSender<RenderFrame>,
-    pub from_render_thread_for_input: Receiver<VirtualKeyCode>,
+    pub from_render_thread_for_input: Receiver<glutin::KeyboardInput>,
     pub test: i32,
     pub input: Input,
     pub entities: HashMap<UID, &'a Entity>,
-    pub type_to_uid_list: HashMap<EEntityType, Vec<UID>>
+    pub type_to_uid_list: HashMap<EEntityType, Vec<UID>>,
+   // pub key_pressed: [bool; 256],
+    pub key_pressed: HashMap<glutin::VirtualKeyCode, bool>,
 }
 
 impl<'a> World<'a> {
@@ -42,7 +44,7 @@ impl<'a> World<'a> {
         to_content_server: Sender<EContentRequestType>,
         from_cotent_server: Receiver<EContentRequestResult>,
         to_render_thread: SyncSender<RenderFrame>,
-        from_render_thread_for_input: Receiver<VirtualKeyCode>,
+        from_render_thread_for_input: Receiver<glutin::KeyboardInput>,
     ) -> World<'a> {
 
         World {
@@ -56,6 +58,7 @@ impl<'a> World<'a> {
             input: Input::new(),
             entities: HashMap::new(),
             type_to_uid_list: HashMap::new(),
+            key_pressed: HashMap::new(),
         }
     }
 
@@ -63,7 +66,7 @@ impl<'a> World<'a> {
         to_content_server: Sender<EContentRequestType>,
         from_cotent_server: Receiver<EContentRequestResult>,
         to_render_thread: SyncSender<RenderFrame>,
-        from_render_thread_input: Receiver<VirtualKeyCode>,
+        from_render_thread_input: Receiver<glutin::KeyboardInput>,
     ) {
 
         let world: World = World::new(
@@ -114,8 +117,13 @@ impl<'a> World<'a> {
             let input_check = self.from_render_thread_for_input.try_recv();
 
             match input_check {
-                Ok(_input_event) => {},
-                Err(_e) => {},
+                Ok(input_event) => {
+                   let key_value = self.key_pressed.entry(*input_event.virtual_keycode.as_ref().unwrap()).or_insert(input_event.state == glutin::ElementState::Pressed);
+                   *key_value = input_event.state == glutin::ElementState::Pressed;
+                },
+                Err(_e) => {
+                    
+                },
             }
 
             let mut modify_functions = vec![];

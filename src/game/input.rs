@@ -1,17 +1,9 @@
 use std::collections::HashMap;
 
-#[derive(PartialEq, Eq, Hash)]
-pub enum EKeyCode {
-    EKeyA,
-    EKeyB,
-    EKeyS,
-    EKeyW,
-    EKeyUpArrow,
-    EKeyDownArrow,
-}
+use glutin::VirtualKeyCode;
 
 pub struct Input {
-    pub keys: HashMap<EKeyCode, bool>,
+    pub keys: HashMap<VirtualKeyCode, bool>,
 }
 
 impl Input {
@@ -19,13 +11,8 @@ impl Input {
         Input { keys: HashMap::new() }
     }
 
-    pub fn poll(&mut self) {}
-
-    pub fn is_space_down(&self) -> bool {
-        true
-    }
-
-    pub fn get_key_down(&self, _key_code: EKeyCode) -> bool {
-        return true;
+    pub fn get_key_down(_virtual_key_code: VirtualKeyCode) -> bool {
+        
+        return false;
     }
 }

@@ -37,7 +37,7 @@ pub struct Renderer {
     from_game_thread: Receiver<RenderFrame>,
     _to_content_manifest: Sender<EContentLoadRequst>,
     _from_content_manifest: Receiver<EContentType>,
-    to_game_thread_with_input: Sender<VirtualKeyCode>,
+    to_game_thread_with_input: Sender<glutin::KeyboardInput>,
     _sprite_name_to_texture_id: HashMap<String, GLuint>,
 }
 
@@ -46,7 +46,7 @@ impl Renderer {
         from_game_thread: Receiver<RenderFrame>,
         to_content_manifest: Sender<EContentLoadRequst>,
         from_content_manifest: Receiver<EContentType>,
-        to_game_thread_with_input: Sender<VirtualKeyCode>,
+        to_game_thread_with_input: Sender<glutin::KeyboardInput>,
     ) -> Renderer {
         Renderer {
             ortho_matrix: ortho(-1000.0f32, 1000.0f32, -1000.0f32, 1000.0f32, 0.0, 10.0),
@@ -62,7 +62,7 @@ impl Renderer {
         from_game_thread: Receiver<RenderFrame>,
         to_content_manifest: Sender<EContentLoadRequst>,
         from_content_manifest: Receiver<EContentType>,
-        to_game_thread_with_input: Sender<VirtualKeyCode>,
+        to_game_thread_with_input: Sender<glutin::KeyboardInput>,
     ) {
 
 
@@ -125,9 +125,7 @@ impl Renderer {
                             }
 
                             let _ = self.to_game_thread_with_input.send(
-                                input_event
-                                    .virtual_keycode
-                                    .unwrap(),
+                                input_event,
                             );
                         },
                         glutin::WindowEvent::Resized(_width, _height) => {
