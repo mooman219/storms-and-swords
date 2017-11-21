@@ -64,7 +64,7 @@ fn main() {
     let (game_thread_render_frame, render_thread_render_frame): (SyncSender<RenderFrame>, Receiver<RenderFrame>) =
         mpsc::sync_channel(3);
 
-    let (game_input_thread, game_thread_gets_input): (Sender<glutin::VirtualKeyCode>, Receiver<glutin::VirtualKeyCode>) =
+    let (game_input_thread, game_thread_gets_input): (Sender<glutin::KeyboardInput>, Receiver<glutin::KeyboardInput>) =
         mpsc::channel();
 
     

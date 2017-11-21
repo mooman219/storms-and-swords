@@ -20,6 +20,7 @@ pub struct SquareRenderer {
     vertex_buffer: GLuint,
     index_buffer: GLuint,
     color_buffer: GLuint,
+    uv_buffer: GLuint
 }
 
 impl SquareRenderer {
@@ -44,10 +45,13 @@ impl SquareRenderer {
         let mut vertex_buffer = 0;
         let mut index_buffer = 0;
         let mut color_buffer = 0;
+        let mut uv_buffer = 0;
+        
         unsafe {
             gl::GenBuffers(1, &mut vertex_buffer);
             gl::GenBuffers(1, &mut index_buffer);
             gl::GenBuffers(1, &mut color_buffer);
+            gl::GenBuffers(1, &mut uv_buffer);
         }
 
         SquareRenderer {
@@ -55,6 +59,7 @@ impl SquareRenderer {
             vertex_buffer: vertex_buffer,
             index_buffer: index_buffer,
             color_buffer: color_buffer,
+            uv_buffer: uv_buffer
         }
     }
 
@@ -63,6 +68,8 @@ impl SquareRenderer {
         let mut vertex_array: Vec<GLfloat> = vec![];
         let mut index_array: Vec<GLuint> = vec![];
         let mut color_array: Vec<GLfloat> = vec![];
+        let mut uv_index : Vec<GLfloat> = vec![];
+
         let mut count = 0;
 
         for sqd in sqaures {
@@ -77,6 +84,15 @@ impl SquareRenderer {
                     (0.5 * sqd.width) + sqd.pos[0],
                     (0.5 * sqd.height) + sqd.pos[1],
                 ],
+            );
+
+            uv_index.extend(
+                &[
+                    0f32, 0f32,
+                    1f32, 0f32,
+                    0f32, 1f32,
+                    1f32, 1f32
+                ]
             );
             
             color_array.extend(&[sqd.color[0], sqd.color[1], sqd.color[2], 
@@ -135,6 +151,26 @@ impl SquareRenderer {
                 ptr::null(),
             );
 
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.uv_buffer);
+            gl::BufferData(
+                gl::ARRAY_BUFFER,
+                (uv_index.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                mem::transmute(uv_index.as_ptr()),
+                gl::STATIC_DRAW
+            );
+
+            gl::EnableVertexAttribArray(3);
+            gl::VertexAttribPointer(
+                3 as GLuint,
+                2,
+                gl::FLOAT,
+                gl::FALSE as GLboolean,
+                0,
+                ptr::null()
+            );
+
+
+
             gl::BindBuffer(gl::ARRAY_BUFFER, self.color_buffer);
             gl::BufferData(
                 gl::ARRAY_BUFFER,
@@ -160,6 +196,7 @@ impl SquareRenderer {
                 gl::STATIC_DRAW,
             );
 
+         
             gl::DrawElements(
                 gl::TRIANGLES,
                 index_array.len() as i32,
