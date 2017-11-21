@@ -114,18 +114,15 @@ impl<'a> World<'a> {
         loop {
             frame_timer.frame_start();
 
-            let input_check = self.from_render_thread_for_input.try_recv();
-
-            match input_check {
-                Ok(input_event) => {
-                   let key_value = self.key_pressed.entry(*input_event.virtual_keycode.as_ref().unwrap()).or_insert(input_event.state == glutin::ElementState::Pressed);
-                   *key_value = input_event.state == glutin::ElementState::Pressed;
-                },
-                Err(_e) => {
-                    
-                },
+            {
+                //this must be in its own block as it causes an immtuable borrow of the self varible
+                let current_iter = self.from_render_thread_for_input.try_iter();
+                for event in current_iter {
+                //    println!("{:?}", event);
+                    self.input.process_key_event(event);
+                }
             }
-
+            
             let mut modify_functions = vec![];
             let mut controllers_type = vec![];
 
@@ -149,7 +146,7 @@ impl<'a> World<'a> {
             }
 
             let _ = self.to_render_thread.try_send(render_frame);
-
+            self.input.end_of_frame_clean();
             frame_timer.frame_end();
         }
     }
