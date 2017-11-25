@@ -33,8 +33,6 @@ use graphics::renderer::{RenderFrame, Renderer};
 fn main() {
 
 
-
-    //let PLEASE = glium::glutin::
     //this is for assets that have been loaded by their threads
     //and then for the content manifest to keep track of them
     let (load_subthread_sender, content_manifest_asset_receiver): (Sender<EContentType>, Receiver<EContentType>) =
@@ -85,11 +83,10 @@ fn main() {
     );
     
     let _ = thread::spawn(move || { LoadContent::thread_loop(load_content); });
-    
-    //create a render loop
-
 
     
+    //"Game logic" is here, true input event processing happens here
+    //so think the App Logic for a App
     let _ = thread::spawn(move || {
         World::update(
             game_thread_request,
@@ -99,7 +96,8 @@ fn main() {
         );
     });
         
-    
+    //Rendering logic is here + the inital capture of input events
+    //if you do not understand Glutin + Opengl, it is likely to be hard to understand what is going on here
     Renderer::render_thread(
         render_thread_render_frame,
         render_thread_asset_request.clone(),

@@ -54,8 +54,8 @@ impl TetrominoType {
             TetrominoType::El => {
                 return vec![
                     ((0, 0), false),
-                    ((1, 0), true),
-                    ((1, 1), false),
+                    ((1, 0), false),
+                    ((1, 1), true),
                     ((1, 2), false)
                 ];
             },
@@ -135,6 +135,8 @@ impl<'a>TetrisBlockController {
         }
     }
 
+    //this assumes that new_pos is a set of valid(open) indexes in the tetris_Frame
+    //it will then move the current cluster to that positions, so this is used by move, rotate, and drop
     pub fn update_current_cluster(&mut self, inner_world: &mut World, new_pos: &Vec<Vec2>) {
         let old_poses = self.current_cluster_pos.clone();
         self.current_cluster_pos.truncate(0);
@@ -166,6 +168,10 @@ impl<'a>TetrisBlockController {
         self.current_cluster_pos = new_pos.clone();
     }
   
+    //this will create the blocks, the indexs, and accounting for a new tetris cluster
+    //at the end of this function, the new indexs in the tetris_frame should be set with the new uids
+    //current_cluster_pos should contain all those indexs
+    //and the entity should be held by world
     pub fn genererate_and_place_next_tetris_block(&mut self, inner_world: &mut World){
 
         let color_v = Range::new(0.0f32, 1.0f32);
@@ -189,9 +195,14 @@ impl<'a>TetrisBlockController {
         }
   }
 
-    pub fn generate_next_positions_for_cluster(&self) -> Option<Vec<Vec2>> {
+    //this will genreate the next down positions for each block in the cluster
+    //returning none if any of the new places are not valid
+    //you must always provide the current cluster positions
+    pub fn generate_next_down_position_for_cluster(cluster: &Vec<Vec2>) -> Option<Vec<Vec2>> {
+        
         let mut new_pos : Vec<Vec2> = vec![];
-        for pos in &self.current_cluster_pos {
+
+        for pos in cluster {
             let new_y = pos.1 + 1;
             if new_y < 0 || new_y > 19{
                 return None;
@@ -203,10 +214,10 @@ impl<'a>TetrisBlockController {
     }
 
     //a negative direction indicates a move to the left, and positive direction indicates a move to the right
-    pub fn genertate_next_move_for_cluster(&self, direction: i8) -> Option<Vec<Vec2>>{
+    pub fn genertate_next_move_for_cluster(direction: i8, cluster: &Vec<Vec2>) -> Option<Vec<Vec2>>{
        let mut new_pos : Vec<Vec2> = vec![];
 
-       for pos in &self.current_cluster_pos {
+       for pos in cluster {
            let new_x = pos.0 + direction;
            if new_x < 0 || new_x > 9 {
                return None;
@@ -216,6 +227,7 @@ impl<'a>TetrisBlockController {
        return Some(new_pos); 
     }
 
+    //will rotate the blocks by 90 degrees, around the "marked" or "middle" block of the cluster
     pub fn generate_next_rotation_for_cluster(&self, inner_world: &mut World, direction: i8) -> Option<Vec<Vec2>> {
      
         let mut is_marked = false;
@@ -239,24 +251,106 @@ impl<'a>TetrisBlockController {
         }
 
         let mut new_pos: Vec<Vec2> = vec![];
-        for pos in &self.current_cluster_pos {
-            let new_x = pos.0 as f32 * f32::cos((f32::consts::PI / 2.0f32 * direction as f32) as f32) - 
-                        pos.1 as f32 * f32::sin((f32::consts::PI / 2.0f32 * direction as f32) as f32);
+        
 
-            let new_y = pos.1 as f32 * f32::cos((f32::consts::PI / 2.0f32 * direction as f32) as f32) - 
-                        pos.0 as f32 * f32::sin((f32::consts::PI / 2.0f32 * direction as f32) as f32); 
+        //we can rotate a point by simply switching the x and y, and then negating one based on the direction we want to go in
+        //(1,0) is a 90 degree rotation from (0, 1), and (0, -1)
+        for pos in &self.current_cluster_pos {
+
+            let mut new_x = pos.0 - marked_pos.0;
+            let mut new_y = pos.1 - marked_pos.1;
+
+            if direction == 1 {
+                new_x = new_x * -1;
+            }
+            else if direction == -1 {
+                new_y = new_y * -1;
+            }
+            let temp = new_x;
+            let new_x = new_y;
+            let new_y = temp;
+
             
             new_pos.push((new_x as i8 + marked_pos.0, new_y as i8 + marked_pos.1));
+        }
+        for pos in &new_pos {
+            if pos.0 < 0 || pos.0 > 9 {
+                return None;
+            }
+
+            if pos.1 < 0 || pos.1 > 19 {
+                return None;
+            }
         }
 
         return Some(new_pos);
     }
 
-    pub fn finish_with_current_cluster(&mut self) {
+    //helper function that will likely have more to do 
+    pub fn finish_with_current_cluster(&mut self, inner_world: &mut World) {
         self.current_cluster_pos.truncate(0);
+
+        let lines = self.look_for_solid_lines();
+        if lines.len() != 0 {
+            for index in lines {
+                let len = self.tetris_frame[index].len();
+                for i in 0..len {
+                    let uid = self.tetris_frame[index][i].unwrap();
+                    inner_world.delete_entity(uid);
+                    self.tetris_frame[index][i] = None;
+                }
+            }
+        
+            let mut new_frame : [[Option<UID>; 10]; 20] = [[None; 10]; 20];
+            let mut fake_y = 0;
+            for y in 0..20 {
+                if TetrisBlockController::is_line_empty(&self.tetris_frame[19 - y]) {
+                        continue;
+                }
+                else {
+                    for x in 0..10 {
+                        new_frame[19 - fake_y][x] = self.tetris_frame[19 - y][x];
+                    }
+                    fake_y = fake_y + 1;
+                }
+            }
+            self.tetris_frame = new_frame;
+            for y in 0..20 {
+                for x in 0..10 {
+                    let uid_maybe = self.tetris_frame[y][x];
+                    match uid_maybe {
+                        Some(uid) => {
+                            let tetris_piece = inner_world.get_mut_entity(uid);
+                            match tetris_piece {
+                                Some(tetris_piece) => {
+                                    let tetris_piece = unsafe{&mut *(tetris_piece as  *mut &Entity as *mut &mut TetrisBlockModel)};
+                                    tetris_piece.pos = Vector3::new((x as i8 - 5) as f32 * 100f32 , 950f32 + (100f32 * -(y as f32)), 250f32);
+                                },
+                                None => {
+
+                                }
+                            }
+                           // 
+                        },
+                        None => {
+
+                        }
+                    }
+                }
+            }
+//              
+        }
+    }
+    pub fn is_line_empty(line: &[Option<UID>; 10]) -> bool {
+        for el in line {
+            if el.is_some() {
+                return false;
+            }
+        }
+        true
     }
 
-
+    //this will test to make sure that the positions you want to move to are both, open, if not, are not the current cluster itself
     pub fn are_unoccupied_and_not_me(&self, posistions: &Vec<Vec2>) -> bool {
 
         for pos in posistions {
@@ -270,6 +364,53 @@ impl<'a>TetrisBlockController {
         return true;
     }
 
+    //this will always return a value, because at the very least a cluster can stay in place and that be a valid drop
+
+    pub fn generate_drop_block_indexes(&self) -> Vec<Vec2>{
+        let mut final_pos = Some(self.current_cluster_pos.clone());
+        
+        while final_pos.as_ref().is_some() {
+            let check = TetrisBlockController::generate_next_down_position_for_cluster(final_pos.as_ref().unwrap());
+            if check.is_some() {
+                if self.are_unoccupied_and_not_me(&check.as_ref().unwrap()) {
+                    final_pos = check;
+                }
+                else {
+                    return final_pos.unwrap();
+                }
+            }
+            else {
+                return final_pos.unwrap();
+            }
+        }
+
+        final_pos.unwrap()
+    }
+
+    //this will return y index of all rules that are full in the current frame
+    //it does not clear them
+    pub fn look_for_solid_lines(&self) -> Vec<usize> {
+ 
+        let mut indexes = vec![];
+
+        for index in 0..20 {
+            let mut count = 0;
+            for x_index in 0..10 {
+                let val =  self.tetris_frame[index][x_index];
+                    
+                if val != None {
+                    count = count + 1;
+                }
+            }
+            if count == 10 {
+                indexes.push(index);
+            }
+        }
+        indexes
+    }
+
+    
+
 }
 
 impl EntityController for TetrisBlockController {
@@ -278,6 +419,7 @@ impl EntityController for TetrisBlockController {
         self.uid
     }
     
+    //called once pre frame, it updates the current cluster, and handle the condition of a soild line forming
     fn update(&self, _world: &World) ->  Option<Box<Fn(&mut World, &mut EntityController)>> {
 
          let return_closure = move |inner_world: &mut World, controller: &mut EntityController| {
@@ -304,7 +446,7 @@ impl EntityController for TetrisBlockController {
                 }
 
                 if direction != 0 {
-                    let lateral_move_attempt = tbc.genertate_next_move_for_cluster(direction);
+                    let lateral_move_attempt = TetrisBlockController::genertate_next_move_for_cluster(direction, &tbc.current_cluster_pos.clone());
                     if lateral_move_attempt.is_some() {
 
                         if tbc.are_unoccupied_and_not_me(&lateral_move_attempt.as_ref().unwrap()) {
@@ -323,11 +465,7 @@ impl EntityController for TetrisBlockController {
                 }
 
                 if rotate_direction != 0 {
-                    println!("Hello");
-                    //this takes in inner world because we have to look up which of the tetris blocks is seen as the middle
                     let rotate_move = tbc.generate_next_rotation_for_cluster(inner_world, rotate_direction);
-                    println!("{:?}", tbc.current_cluster_pos);
-                    println!("{:?}", rotate_move);
                     if rotate_move.is_some() {
                         if tbc.are_unoccupied_and_not_me(&rotate_move.as_ref().unwrap()) {
                             tbc.update_current_cluster(inner_world, &rotate_move.unwrap());
@@ -335,12 +473,17 @@ impl EntityController for TetrisBlockController {
                     }
                 }
 
+                if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Down) {
+                    let drop_pos = tbc.generate_drop_block_indexes();
+                    tbc.update_current_cluster(inner_world, &drop_pos);
+                }
+
                 
 
-                if tbc.frame_count == 60u16 {
+                if tbc.frame_count == 45u16 {
 
                     let next_pos;
-                    next_pos = tbc.generate_next_positions_for_cluster();
+                    next_pos = TetrisBlockController::generate_next_down_position_for_cluster(&tbc.current_cluster_pos.clone());
  
                     match next_pos {
                         Some(next_pos) => {
@@ -352,12 +495,12 @@ impl EntityController for TetrisBlockController {
                                 
                             }
                             else {
-                                tbc.finish_with_current_cluster();
+                                tbc.finish_with_current_cluster(inner_world);
                             }
                         }
                         None => {
                             //in this case we can assume that a generated position is out of bounds, so we just stop the movmenet
-                            tbc.finish_with_current_cluster();
+                            tbc.finish_with_current_cluster(inner_world);
                         }
                     }
                     tbc.frame_count = 016;
@@ -371,8 +514,6 @@ impl EntityController for TetrisBlockController {
     fn get_entity_type(&self) -> EEntityType {
         EEntityType::TetrisBlock
     }
-
-
 }
 
 #[derive(Copy, Clone)]

@@ -7,7 +7,6 @@ use game::entity::{Entity, UID, EEntityType, EntityController};
 use std::sync::mpsc::{Receiver, Sender, SyncSender};
 use content::load_content::{EContentRequestType, EContentRequestResult};
 use graphics::renderer::RenderFrame;
-use glutin::VirtualKeyCode;
 use game::Input;
 use game::tetris_block::{TetrisBlockController};
 
@@ -86,6 +85,10 @@ impl<'a> World<'a> {
 
     pub fn get_mut_entity(&mut self, uid: UID) -> Option<&mut &'a Entity> {
         self.entities.get_mut(&uid)
+    }
+
+    pub fn delete_entity(&mut self, uid: UID) {
+        self.entities.remove(&uid);
     }
 
     pub fn add_entity(&mut self, entity: Box<Entity>) {
