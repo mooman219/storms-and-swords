@@ -8,6 +8,7 @@ use std::sync::mpsc::{Receiver, Sender, SyncSender};
 use content::load_content::{EContentRequestType, EContentRequestResult};
 use graphics::renderer::RenderFrame;
 use game::Input;
+use game::ui::UIController;
 use game::tetris_block::{TetrisBlockController};
 
 /*
@@ -109,10 +110,16 @@ impl<'a> World<'a> {
 
         let mut frame_count = 0 as u64;
         let controller_uid = self.get_uid_for_controller().clone();
+        let ui_uid = self.get_uid_for_controller().clone();
         let mut entity_controllers: HashMap<EEntityType, &mut EntityController> = HashMap::new();
+        
         let new_tetris_block_controller = TetrisBlockController::new(controller_uid);
         let controller_store = unsafe{&mut *Box::into_raw(Box::new(new_tetris_block_controller))};
         entity_controllers.insert(EEntityType::TetrisBlock, controller_store);
+        
+        let new_ui_controller = UIController::new(ui_uid);
+        let ui_store = unsafe{&mut *Box::into_raw(Box::new(new_ui_controller))};
+        entity_controllers.insert(EEntityType::UI, ui_store);
 
         loop {
             frame_timer.frame_start();

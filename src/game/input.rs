@@ -59,6 +59,9 @@ impl Input {
             if *val == KeyState::Pressed {
                 *val = KeyState::HeldBuffer;
             }
+            else if *val == KeyState::Released {
+                *val = KeyState::Idle;
+            }
         }
     }
 
@@ -89,9 +92,11 @@ impl Input {
             else if *val != KeyState::Held && *val != KeyState::HeldBuffer {
                 *val = KeyState::Pressed;
             }
+            else if *val == KeyState::HeldBuffer {
+                *val = KeyState::Held;
+            }
         }
         else if input_event.state == glutin::ElementState::Released {
-
             let val = self.key_state.get_mut(&input_event.virtual_keycode.unwrap()).unwrap();
             match current_state {
                 KeyState::Pressed => {

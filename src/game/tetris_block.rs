@@ -2,11 +2,11 @@
 #![allow(non_snake_case)]
 use glutin;
 
+use cgmath;
 use game::entity::{Entity, UID, EEntityType, EntityController};
+use game::tetris_block_model::TetrisBlockModel;
 use cgmath::Vector3;
 use game::world::World;
-use graphics::renderer::RenderFrame;
-use graphics::square_renderer::SquareRenderData;
 use rand;
 use rand::distributions::{IndependentSample, Range};
 use std::f32;
@@ -114,6 +114,7 @@ impl TetrominoType {
 pub struct TetrisBlockController {
     pub uid: UID,
     pub current_cluster: Vec<UID>,
+    pub phantom_cluster: Vec<UID>,
     pub frame_count: u16,
     pub tetris_frame: [[Option<UID>; 10]; 20],
     pub rng_pool: rand::ThreadRng,
@@ -127,6 +128,7 @@ impl<'a>TetrisBlockController {
         TetrisBlockController {
             uid,
             current_cluster: vec![],
+            phantom_cluster: vec![],
             frame_count: 0u16,
             tetris_frame: [[None; 10]; 20],
             rng_pool: rand::thread_rng(),
@@ -187,13 +189,22 @@ impl<'a>TetrisBlockController {
         for offset in offsets {
             let block_pos = offset.0;
             let marked = offset.1;
-            let pos = Vector3::new(100.0f32 * (block_pos.0 as f32), 950f32 + (100f32 * -(block_pos.1 as f32)), 250f32);
+            let pos = Vector3::new(100.0f32 * (block_pos.0 as f32 + 1f32), 950f32 + (100f32 * -(block_pos.1 as f32)), 250f32);
             let tbm = TetrisBlockModel::new(pos, color, 0u64, marked);
             let new_uid = inner_world.set_uid_for_entity(Box::new(tbm));
-            self.tetris_frame[(self.spawn_pos.1 + block_pos.1) as usize][(self.spawn_pos.0 + block_pos.0) as usize] = Some(new_uid);
-            self.current_cluster_pos.push((self.spawn_pos.0 + block_pos.0, self.spawn_pos.1 + block_pos.1));
+            self.tetris_frame[(self.spawn_pos.1 + block_pos.1) as usize][(self.spawn_pos.0 + block_pos.0) as usize + 1] = Some(new_uid);
+            self.current_cluster_pos.push((self.spawn_pos.0 + block_pos.0 + 1, self.spawn_pos.1 + block_pos.1));
         }
-  }
+    }
+
+    //called once at the start of the game, this creates the phantom blocks that are used for the phantom cluster
+    //which is used for showing where the players tetris piece would end if they droped it now
+    pub fn create_phantom_cluster(&mut self, inner_world: &mut World) {
+        for _ in 0..3 {
+            let tbm = TetrisBlockModel::new(Vector3::new(0.0f32, 0.0f32, 0.0f32), [1.0f32, 1.0f32, 0.0f32, 0.5f32], 0u64, false);
+            self.phantom_cluster.push(inner_world.set_uid_for_entity(Box::new(tbm)));
+        }
+    }
 
     //this will genreate the next down positions for each block in the cluster
     //returning none if any of the new places are not valid
@@ -330,7 +341,6 @@ impl<'a>TetrisBlockController {
 
                                 }
                             }
-                           // 
                         },
                         None => {
 
@@ -338,7 +348,6 @@ impl<'a>TetrisBlockController {
                     }
                 }
             }
-//              
         }
     }
     pub fn is_line_empty(line: &[Option<UID>; 10]) -> bool {
@@ -448,7 +457,6 @@ impl EntityController for TetrisBlockController {
                 if direction != 0 {
                     let lateral_move_attempt = TetrisBlockController::genertate_next_move_for_cluster(direction, &tbc.current_cluster_pos.clone());
                     if lateral_move_attempt.is_some() {
-
                         if tbc.are_unoccupied_and_not_me(&lateral_move_attempt.as_ref().unwrap()) {
                             tbc.update_current_cluster(inner_world, &lateral_move_attempt.unwrap());
                         }
@@ -463,6 +471,9 @@ impl EntityController for TetrisBlockController {
                 else if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Q) {
                     rotate_direction = -1;
                 }
+                else if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Up) {
+                    rotate_direction = -1;
+                }
 
                 if rotate_direction != 0 {
                     let rotate_move = tbc.generate_next_rotation_for_cluster(inner_world, rotate_direction);
@@ -473,14 +484,50 @@ impl EntityController for TetrisBlockController {
                     }
                 }
 
-                if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Down) {
+                
+                if inner_world.get_input().on_key_released(glutin::VirtualKeyCode::Space) {
                     let drop_pos = tbc.generate_drop_block_indexes();
                     tbc.update_current_cluster(inner_world, &drop_pos);
+                    tbc.finish_with_current_cluster(inner_world);
+                    tbc.frame_count = 0u16;
                 }
-
                 
 
-                if tbc.frame_count == 45u16 {
+                if inner_world.get_input().on_key_held(glutin::VirtualKeyCode::Down) {
+                    tbc.frame_count += 6;
+                }
+
+
+                if tbc.current_cluster_pos.len() > 0 {
+                    let mut pos = tbc.current_cluster_pos.clone();
+                    while tbc.are_unoccupied_and_not_me(&pos) {
+                        let op_pos = TetrisBlockController::generate_next_down_position_for_cluster(&pos);
+                        match op_pos {
+                            Some(op_pos) => {
+                                pos = op_pos;
+                            },
+                            None => {
+                                break;
+                            }
+                        }
+                    }
+
+                    for i in 0..tbc.phantom_cluster.len() {
+                        let phantom = inner_world.get_mut_entity(tbc.phantom_cluster[i]);
+                        match phantom {
+                            Some(phantom) => {
+                                let phantom = unsafe { &mut *(phantom as *mut &Entity as *mut TetrisBlockModel) };
+                                phantom.pos = Vector3::new((pos[i].0 as i8 - 5) as f32 * 100f32 , 950f32 + (100f32 * -(pos[i].1 as f32)), 250f32);
+                            },
+                            None => {
+
+                            }
+                        }
+                    }
+                }
+                
+
+                if tbc.frame_count >= 45u16 {
 
                     let next_pos;
                     next_pos = TetrisBlockController::generate_next_down_position_for_cluster(&tbc.current_cluster_pos.clone());
@@ -503,7 +550,7 @@ impl EntityController for TetrisBlockController {
                             tbc.finish_with_current_cluster(inner_world);
                         }
                     }
-                    tbc.frame_count = 016;
+                    tbc.frame_count = 0u16;
                 }
             }
         };
@@ -515,51 +562,3 @@ impl EntityController for TetrisBlockController {
         EEntityType::TetrisBlock
     }
 }
-
-#[derive(Copy, Clone)]
-pub struct TetrisBlockModel {
-    pub pos: Vector3<f32>,
-    pub color: [f32;4],
-    pub uid: UID,
-    pub is_middle: bool
-}
-
-impl TetrisBlockModel {
-    pub fn new(pos: Vector3<f32>, color: [f32;4], uid: UID, is_middle: bool) -> TetrisBlockModel {
-        TetrisBlockModel {
-            pos,
-            color,
-            uid,
-            is_middle
-        }
-    }
-}
-
-impl Entity for TetrisBlockModel {
-    fn get_entity_type(&self) -> EEntityType {
-        EEntityType::TetrisBlock
-    }
-
-    fn set_uid(&mut self, uid: UID) {
-        self.uid = uid;
-    }
-
-    fn get_uid(&self) -> UID {
-        self.uid
-    }
-
-    fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
-        if render_frame.sqaures.is_none() {
-            render_frame.sqaures = Some(vec![]);
-        }
-
-        let sqd = SquareRenderData{
-            pos: [self.pos.x, self.pos.y],
-            height: 100.0f32,
-            width: 100.0f32,
-            color: [self.color[0], self.color[1], self.color[2]]
-        };
-
-        render_frame.sqaures.as_mut().unwrap().push(sqd);
-    }
-} 

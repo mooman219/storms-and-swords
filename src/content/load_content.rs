@@ -30,6 +30,7 @@ pub enum EContentRequestResult {
 #[derive(Clone)]
 pub enum EContentType {
     Image(ContentId, DynamicImage),
+    Font,
     NotLoaded,
 }
 

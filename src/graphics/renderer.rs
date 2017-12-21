@@ -13,6 +13,7 @@ use content::load_content::{EContentType, EContentLoadRequst};
 use frame_timer::FrameTimer;
 use graphics::square_renderer::{SquareRenderData, SquareRenderer};
 use graphics::circle_renderer::{CircleRenderData, CircleRenderer};
+use graphics::frame_renderer::{FrameRenderer};
 
 
 #[derive(Clone)]
@@ -102,6 +103,8 @@ impl Renderer {
 
         let mut square = SquareRenderer::new();
         let mut circle = CircleRenderer::new();
+    //    let mut frame = FrameRenderer::new();
+
         let mut running = true;
         while running {
 
@@ -136,7 +139,11 @@ impl Renderer {
                 }
             });
 
+            
             unsafe {
+       //         gl::BindFramebuffer(gl::FRAMEBUFFER, frame.frame_buffer_name);
+        //        gl::Viewport(0, 0, 800, 1000);
+                
                 gl::ClearColor(0.16, 0.5, 0.72, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT);
             };
@@ -166,6 +173,7 @@ impl Renderer {
                 }
             }
 
+  //          frame.render();        
             let _ = gl_window.swap_buffers();
 
             frame_timer.frame_end();

@@ -9,6 +9,7 @@ extern crate image;
 extern crate lazy_static;
 extern crate threadpool;
 extern crate rand;
+extern crate rusttype;
 
 #[macro_use]
 mod macros;

@@ -9,7 +9,9 @@ pub type UID = u64;
 pub enum EEntityType {
     Paddle,
     Ball,
-    TetrisBlock
+    TetrisBlock,
+    UI,
+    UIScreenBlockers
 }
 
 pub trait Entity {
