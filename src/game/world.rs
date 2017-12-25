@@ -113,13 +113,20 @@ impl<'a> World<'a> {
         let ui_uid = self.get_uid_for_controller().clone();
         let mut entity_controllers: HashMap<EEntityType, &mut EntityController> = HashMap::new();
         
-        let new_tetris_block_controller = TetrisBlockController::new(controller_uid);
+        let mut new_tetris_block_controller = TetrisBlockController::new(controller_uid);
         let controller_store = unsafe{&mut *Box::into_raw(Box::new(new_tetris_block_controller))};
         entity_controllers.insert(EEntityType::TetrisBlock, controller_store);
+
         
-        let new_ui_controller = UIController::new(ui_uid);
+        let mut new_ui_controller = UIController::new(ui_uid);
+        new_ui_controller.start(&mut self);
         let ui_store = unsafe{&mut *Box::into_raw(Box::new(new_ui_controller))};
+
         entity_controllers.insert(EEntityType::UI, ui_store);
+
+        for (k, v) in &mut entity_controllers {
+            v.start(&mut self);
+        }
 
         loop {
             frame_timer.frame_start();
@@ -137,7 +144,9 @@ impl<'a> World<'a> {
             let mut controllers_type = vec![];
 
             for controllers in entity_controllers.keys() {
+                
                 modify_functions.push(entity_controllers.get(controllers).unwrap().update(&self));//actually genreate the functions
+
                 controllers_type.push(controllers.clone());
             }
 
@@ -165,7 +174,7 @@ impl<'a> World<'a> {
         &self.input
     }
 
-    //entnties (IE those who are creating them) are unable to get uids without also giving the world ownership of that entity
+    //enties (IE those who are creating them) are unable to get uids without also giving the world ownership of that entity
     pub fn set_uid_for_entity(&mut self, mut entity: Box<Entity>) -> UID{
         self.entity_uids +=1;
         entity.set_uid(self.entity_uids);

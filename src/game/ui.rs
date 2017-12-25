@@ -34,6 +34,11 @@ impl UIController {
 }
 
 impl EntityController for UIController {
+
+    fn start(&mut self, world: &mut World) {
+
+    }
+
     fn update(&self, _world: &World) -> Option<Box<Fn(&mut World, &mut EntityController)>> {
         return Some(Box::new(
             |inner_world: &mut World, controller: &mut EntityController| {
@@ -52,10 +57,6 @@ impl EntityController for UIController {
                     
 
                 }
-
-
-
-
             })
         );
     }

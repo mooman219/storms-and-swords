@@ -2,7 +2,6 @@
 #![allow(non_snake_case)]
 use glutin;
 
-use cgmath;
 use game::entity::{Entity, UID, EEntityType, EntityController};
 use game::tetris_block_model::TetrisBlockModel;
 use cgmath::Vector3;
@@ -176,7 +175,7 @@ impl<'a>TetrisBlockController {
     //and the entity should be held by world
     pub fn genererate_and_place_next_tetris_block(&mut self, inner_world: &mut World){
 
-        let color_v = Range::new(0.0f32, 1.0f32);
+        let color_v = Range::new(0.25f32, 0.75f32);
         let index = Range::new(0usize, 6usize);
         let index = index.ind_sample(&mut self.rng_pool);
         let offsets = TetrominoType::from_usize(index).unwrap().offsets();
@@ -200,8 +199,8 @@ impl<'a>TetrisBlockController {
     //called once at the start of the game, this creates the phantom blocks that are used for the phantom cluster
     //which is used for showing where the players tetris piece would end if they droped it now
     pub fn create_phantom_cluster(&mut self, inner_world: &mut World) {
-        for _ in 0..3 {
-            let tbm = TetrisBlockModel::new(Vector3::new(0.0f32, 0.0f32, 0.0f32), [1.0f32, 1.0f32, 0.0f32, 0.5f32], 0u64, false);
+        for _ in 0..4 {
+            let tbm = TetrisBlockModel::new(Vector3::new(0.0f32, 0.0f32, 0.0f32), [1.0f32, 0.0f32, 0.0f32, 0.5f32], 0u64, false);
             self.phantom_cluster.push(inner_world.set_uid_for_entity(Box::new(tbm)));
         }
     }
@@ -295,6 +294,81 @@ impl<'a>TetrisBlockController {
         }
 
         return Some(new_pos);
+    }
+
+    pub fn phantom_cluster_placement(&mut self, inner_world: &mut World) {
+        if self.current_cluster_pos.len() > 0 {
+            let pos = self.generate_drop_block_indexes();
+
+            for i in 0..self.phantom_cluster.len() {
+                let phantom = inner_world.get_mut_entity(self.phantom_cluster[i]);
+                match phantom {
+                    Some(phantom) => {
+                        let phantom = unsafe { &mut *(phantom as *mut &Entity as *mut &mut TetrisBlockModel) };
+                        phantom.pos = Vector3::new((pos[i].0 as i8 - 5) as f32 * 100f32 , 950f32 + (100f32 * -(pos[i].1 as f32)), 250f32);
+                    },
+                    None => {
+
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn handle_block_drop_and_quick_down(&mut self, inner_world: &mut World) {
+        if inner_world.get_input().on_key_released(glutin::VirtualKeyCode::Space) {
+            let drop_pos = self.generate_drop_block_indexes();
+            self.update_current_cluster(inner_world, &drop_pos);
+            self.finish_with_current_cluster(inner_world);
+            self.frame_count = 0u16;
+        }
+            
+
+        if inner_world.get_input().on_key_held(glutin::VirtualKeyCode::Down) {
+            self.frame_count += 12;
+        }
+    }
+
+    pub fn handle_rotation(&mut self, inner_world: &mut World) {
+        //we first check to see if they want to move, and move them, and then do the same for rotate
+        let mut direction = 0;
+        if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Left) {
+            //generate, test, and respond to a left move
+            direction = -1;
+        }
+        else if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Right) {
+            //generate, test, and respond to a right move
+            direction = 1;
+        }
+
+        if direction != 0 {
+            let lateral_move_attempt = TetrisBlockController::genertate_next_move_for_cluster(direction, &self.current_cluster_pos.clone());
+            if lateral_move_attempt.is_some() {
+                if self.are_unoccupied_and_not_me(&lateral_move_attempt.as_ref().unwrap()) {
+                    self.update_current_cluster(inner_world, &lateral_move_attempt.unwrap());
+                }
+            }
+        }
+
+        let mut rotate_direction = 0;
+        if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::E) {
+            rotate_direction = 1;
+        }
+        else if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Q) {
+            rotate_direction = -1;
+        }
+        else if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Up) {
+            rotate_direction = -1;
+        }
+
+        if rotate_direction != 0 {
+            let rotate_move = self.generate_next_rotation_for_cluster(inner_world, rotate_direction);
+            if rotate_move.is_some() {
+                if self.are_unoccupied_and_not_me(&rotate_move.as_ref().unwrap()) {
+                    self.update_current_cluster(inner_world, &rotate_move.unwrap());
+                }
+            }
+        }
     }
 
     //helper function that will likely have more to do 
@@ -417,15 +491,18 @@ impl<'a>TetrisBlockController {
         }
         indexes
     }
-
-    
-
 }
 
 impl EntityController for TetrisBlockController {
 
     fn get_uid(&self) -> UID {
         self.uid
+    }
+
+    fn start(&mut self, world: &mut World) {
+        
+        self.create_phantom_cluster(world);
+        
     }
     
     //called once pre frame, it updates the current cluster, and handle the condition of a soild line forming
@@ -442,91 +519,12 @@ impl EntityController for TetrisBlockController {
             else {
                 tbc.frame_count = tbc.frame_count + 1u16;
 
+                tbc.handle_rotation(inner_world);
 
-                //we first check to see if they want to move, and move them, and then do the same for rotate
-                let mut direction = 0;
-                if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Left) {
-                    //generate, test, and respond to a left move
-                    direction = -1;
-                }
-                else if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Right) {
-                    //generate, test, and respond to a right move
-                    direction = 1;
-                }
+                tbc.handle_block_drop_and_quick_down(inner_world);
 
-                if direction != 0 {
-                    let lateral_move_attempt = TetrisBlockController::genertate_next_move_for_cluster(direction, &tbc.current_cluster_pos.clone());
-                    if lateral_move_attempt.is_some() {
-                        if tbc.are_unoccupied_and_not_me(&lateral_move_attempt.as_ref().unwrap()) {
-                            tbc.update_current_cluster(inner_world, &lateral_move_attempt.unwrap());
-                        }
-                    }
-                }
-
-
-                let mut rotate_direction = 0;
-                if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::E) {
-                    rotate_direction = 1;
-                }
-                else if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Q) {
-                    rotate_direction = -1;
-                }
-                else if inner_world.get_input().on_key_pressed(glutin::VirtualKeyCode::Up) {
-                    rotate_direction = -1;
-                }
-
-                if rotate_direction != 0 {
-                    let rotate_move = tbc.generate_next_rotation_for_cluster(inner_world, rotate_direction);
-                    if rotate_move.is_some() {
-                        if tbc.are_unoccupied_and_not_me(&rotate_move.as_ref().unwrap()) {
-                            tbc.update_current_cluster(inner_world, &rotate_move.unwrap());
-                        }
-                    }
-                }
-
+                tbc.phantom_cluster_placement(inner_world);
                 
-                if inner_world.get_input().on_key_released(glutin::VirtualKeyCode::Space) {
-                    let drop_pos = tbc.generate_drop_block_indexes();
-                    tbc.update_current_cluster(inner_world, &drop_pos);
-                    tbc.finish_with_current_cluster(inner_world);
-                    tbc.frame_count = 0u16;
-                }
-                
-
-                if inner_world.get_input().on_key_held(glutin::VirtualKeyCode::Down) {
-                    tbc.frame_count += 6;
-                }
-
-
-                if tbc.current_cluster_pos.len() > 0 {
-                    let mut pos = tbc.current_cluster_pos.clone();
-                    while tbc.are_unoccupied_and_not_me(&pos) {
-                        let op_pos = TetrisBlockController::generate_next_down_position_for_cluster(&pos);
-                        match op_pos {
-                            Some(op_pos) => {
-                                pos = op_pos;
-                            },
-                            None => {
-                                break;
-                            }
-                        }
-                    }
-
-                    for i in 0..tbc.phantom_cluster.len() {
-                        let phantom = inner_world.get_mut_entity(tbc.phantom_cluster[i]);
-                        match phantom {
-                            Some(phantom) => {
-                                let phantom = unsafe { &mut *(phantom as *mut &Entity as *mut TetrisBlockModel) };
-                                phantom.pos = Vector3::new((pos[i].0 as i8 - 5) as f32 * 100f32 , 950f32 + (100f32 * -(pos[i].1 as f32)), 250f32);
-                            },
-                            None => {
-
-                            }
-                        }
-                    }
-                }
-                
-
                 if tbc.frame_count >= 45u16 {
 
                     let next_pos;

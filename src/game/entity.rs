@@ -22,7 +22,8 @@ pub trait Entity {
 }
 
 pub trait EntityController {
+    fn start(&mut self, world: &mut World);// -> Option<Box<Fn(&mut World, &mut EntityController)>>;
     fn update(&self, world: &World) -> Option<Box<Fn(&mut World, &mut EntityController)>>;
     fn get_entity_type(&self) -> EEntityType;
-    fn get_uid(&self) -> UID;
+    fn get_uid(&self) -> UID;   
 }
