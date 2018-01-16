@@ -1,12 +1,15 @@
 pub mod entity;
 pub mod world;
-pub mod player;
 pub mod input;
-pub mod tetris_block;
+pub mod character_model;
+pub mod match_controller;
+pub mod background_controller;
+pub mod game_controller;
 pub mod ui;
 pub mod ui_components;
-pub mod tetris_block_model;
+pub mod event_system;
 
 pub use self::world::World;
 pub use self::input::Input;
+pub use self::entity::{Entity, EEntityType, UID, EntityController};
 pub type ContentId = u64;

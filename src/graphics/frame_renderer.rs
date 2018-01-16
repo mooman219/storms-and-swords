@@ -5,7 +5,7 @@ use std::str;
 use std::mem;
 use std::ptr;
 use std::ffi::CString;
-use graphics::renderer::Renderer;
+///use graphics::renderer::Renderer;
 
 
 pub struct FrameRenderer {

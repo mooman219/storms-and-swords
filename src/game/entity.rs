@@ -2,16 +2,18 @@ use game::World;
 use graphics::renderer::RenderFrame;
 
 
-//it is this large for two reasons, one I want to make sure that we never run out to space, and second so that we can have negative uids for flag varibles
+//0 is a reserved UID, it means invalid, or unset
 pub type UID = u64;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum EEntityType {
-    Paddle,
-    Ball,
-    TetrisBlock,
     UI,
-    UIScreenBlockers
+    Character,
+    Team,
+    Tile,
+    BackgroundController,
+    GameController,
+    Match
 }
 
 pub trait Entity {
@@ -22,8 +24,8 @@ pub trait Entity {
 }
 
 pub trait EntityController {
-    fn start(&mut self, world: &mut World);// -> Option<Box<Fn(&mut World, &mut EntityController)>>;
-    fn update(&self, world: &World) -> Option<Box<Fn(&mut World, &mut EntityController)>>;
+    fn start(&mut self, world: &mut World);
+    fn update(&self, world: &World) -> Option<Box<Fn(&mut World, &mut Box<EntityController>)>>;
     fn get_entity_type(&self) -> EEntityType;
-    fn get_uid(&self) -> UID;   
+    fn get_uid(&self) -> UID;
 }

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use game::ContentId;
 use content::load_content::{EContentType, EContentLoadRequst};
 use image::DynamicImage;
-use rusttype::{FontCollection, Scale, point, PositionedGlyph, Font};
+//use rusttype::{FontCollection, Scale, point, PositionedGlyph, Font};
 use frame_timer::FrameTimer;
 
 pub struct ContentManifest {

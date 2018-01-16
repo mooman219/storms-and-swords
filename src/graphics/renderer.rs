@@ -1,11 +1,12 @@
-use gl;
-use gl::types::*;
-
-use cgmath::{Matrix4, ortho};
 use std::collections::HashMap;
-
+use std::fs::{self};
+use std::path::Path;
 use std::sync::mpsc::{Receiver, Sender};
 
+use cgmath::{Matrix4, ortho};
+
+use gl;
+use gl::types::*;
 use glutin;
 use glutin::{GlContext, VirtualKeyCode};
 use content::load_content::{EContentType, EContentLoadRequst};
@@ -13,22 +14,27 @@ use content::load_content::{EContentType, EContentLoadRequst};
 use frame_timer::FrameTimer;
 use graphics::square_renderer::{SquareRenderData, SquareRenderer};
 use graphics::circle_renderer::{CircleRenderData, CircleRenderer};
-use graphics::frame_renderer::{FrameRenderer};
-
+use graphics::sprite_renderer::{SpriteRenderData, SpriteRenderer, SpriteRecordData, SpriteRenderBoxData};
+use serde_json;
 
 #[derive(Clone)]
 pub struct RenderFrame {
     pub frame_index: u64,
     pub sqaures: Option<Vec<SquareRenderData>>,
     pub circles: Option<Vec<CircleRenderData>>,
+    pub static_sprites: Option<Vec<SpriteRenderData>>,
 }
 
 impl RenderFrame {
-    pub fn new(frame_index: u64, sqaures: Option<Vec<SquareRenderData>>, circles: Option<Vec<CircleRenderData>>) -> RenderFrame {
+    pub fn new(frame_index: u64, sqaures: Option<Vec<SquareRenderData>>, 
+                                 circles: Option<Vec<CircleRenderData>>,
+                                 sprites: Option<Vec<SpriteRenderData>>
+                                 ) -> RenderFrame {
         RenderFrame {
             frame_index: frame_index,
             sqaures: sqaures,
             circles: circles,
+            static_sprites: sprites
         }
     }
 }
@@ -39,7 +45,7 @@ pub struct Renderer {
     _to_content_manifest: Sender<EContentLoadRequst>,
     _from_content_manifest: Receiver<EContentType>,
     to_game_thread_with_input: Sender<glutin::KeyboardInput>,
-    _sprite_name_to_texture_id: HashMap<String, GLuint>,
+    sprite_name_to_texture_id: HashMap<String, String>,
 }
 
 impl Renderer {
@@ -55,7 +61,7 @@ impl Renderer {
             _to_content_manifest: to_content_manifest,
             _from_content_manifest: from_content_manifest,
             to_game_thread_with_input: to_game_thread_with_input,
-            _sprite_name_to_texture_id: HashMap::new(),
+            sprite_name_to_texture_id: HashMap::new(),
         }
     }
 
@@ -75,8 +81,63 @@ impl Renderer {
         );
         render_thread.render();
     }
+    //as this function does a lot, it felt best to have it be its own function
+    pub fn load_textures_create_sprite_renderer_and_load_sprite_data(&mut self, static_sprite_renderers: &mut HashMap<String, SpriteRenderer>) {
 
-    pub fn render(self) {
+        use std::fs::File;
+        use std::io::prelude::*;
+
+        let sprite_data_dir_path = "./content/sprite_data";
+
+        let p = Path::new("./content/textures");
+        if p.is_dir() {
+            for entry in fs::read_dir(p).unwrap() {
+                
+                //making my life easier
+                let entry = entry.unwrap();
+                let path = entry.path();
+
+                      //we now need to look up the sprite data, should be under the same name as the texture, just with a different
+                //file extension .json
+                let file_name = entry.file_name().into_string().unwrap();
+                let spl : Vec<&str> = file_name.split(".").collect();
+                let possible_sprite_data_path = String::from(sprite_data_dir_path) + "/" + &spl[0] + ".json";
+                let sprite_data_file = File::open(possible_sprite_data_path.clone());
+
+                match sprite_data_file {
+                    Ok(mut file) => {
+                        //we have a json sprite data file, consume it, using it to set up the last connection between an enity and the sprite
+                        //that they want rendered
+                        let mut s = String::new();
+                        let _ = file.read_to_string(&mut s);
+                        let new_sprite_data_record: SpriteRecordData = serde_json::from_str(&s).unwrap();
+
+                        //create the new renderer, this will load the texture at path
+                        let file_name = entry.file_name().into_string().unwrap();
+
+                        for (k, _v) in &new_sprite_data_record.data {
+                            self.sprite_name_to_texture_id.insert(k.clone(), file_name.clone());
+                        }
+                        
+                        let new_sprite_renderer = SpriteRenderer::new(path.into_os_string().into_string().unwrap(), new_sprite_data_record);
+                        
+                        //add it to the renderers
+                        static_sprite_renderers.insert(file_name, new_sprite_renderer);
+                    },
+                    Err(e) => {
+                        println!(" error reading {:?} ERROR: {}", possible_sprite_data_path, e);
+                    }
+                }
+
+                
+
+          
+
+            }
+        }
+    }
+
+    pub fn render(mut self) {
 
         let mut frame_timer: FrameTimer = FrameTimer::new();
         let mut events_loop = glutin::EventsLoop::new();
@@ -98,12 +159,24 @@ impl Renderer {
             gl::GenVertexArrays(1, &mut vao);
             gl::BindVertexArray(vao);
             gl::Enable(gl::BLEND);
+            gl::Enable(gl::DEPTH_TEST);
+            gl::DepthFunc(gl::LESS);  
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
 
         let mut square = SquareRenderer::new();
         let mut circle = CircleRenderer::new();
-    //    let mut frame = FrameRenderer::new();
+        let mut static_sprite_renderers = HashMap::new();
+
+        
+        //go through each texture in the texture folder, creating a SpriteRenderer for it
+        self.load_textures_create_sprite_renderer_and_load_sprite_data(&mut static_sprite_renderers);
+        //each SpriteRenderer handles loading the texture into memory
+        //this way they have complete owernship of the sheet that they are tasked with rendereing
+        //then look at each of file names and look for corresponding files in the sprite_data folder
+        //build the sprite data map with this, allowing 
+        //key == sprite_name, value = Tuple(SpriteSheetName, SpriteSheetBoxData)
+        //then when a sprite wants to get renderered it 
 
         let mut running = true;
         while running {
@@ -139,13 +212,12 @@ impl Renderer {
                 }
             });
 
+
+
             
             unsafe {
-       //         gl::BindFramebuffer(gl::FRAMEBUFFER, frame.frame_buffer_name);
-        //        gl::Viewport(0, 0, 800, 1000);
-                
                 gl::ClearColor(0.16, 0.5, 0.72, 1.0);
-                gl::Clear(gl::COLOR_BUFFER_BIT);
+                gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT); 
             };
 
             let frame_data = self.from_game_thread.try_recv();
@@ -171,9 +243,24 @@ impl Renderer {
                 if frame_data.circles.is_some() {
                     circle.render(&frame_data.circles.unwrap(), &self);
                 }
+                if frame_data.static_sprites.is_some() {
+                    let static_sprites = frame_data.static_sprites.unwrap();
+                    for sprite in static_sprites {
+                        //this is a many to one, to one relationship of many sprites, to one texture, to one sprite renderer
+                        //I Would enjoy being able to cut out the middle step there
+                        //TODO: simplify thisc
+                        let sprite_sheet_name = self.sprite_name_to_texture_id.get(&sprite.sprite_name).unwrap();
+                        let sprite_sheet_renderer = static_sprite_renderers.get_mut(sprite_sheet_name).unwrap();
+                        sprite_sheet_renderer.current_sprite_datas.push(sprite);
+                    }
+
+                    for (_k, v) in &mut static_sprite_renderers {
+                        v.render(&self);
+                    }
+
+                }
             }
 
-  //          frame.render();        
             let _ = gl_window.swap_buffers();
 
             frame_timer.frame_end();

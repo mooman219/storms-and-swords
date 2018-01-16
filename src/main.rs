@@ -1,6 +1,12 @@
 #![feature(asm, const_fn, const_size_of, fn_traits)]
 extern crate glutin;
 
+extern crate serde;
+extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
+extern crate noise;
+
 extern crate cgmath;
 extern crate frame_timer;
 extern crate gl;

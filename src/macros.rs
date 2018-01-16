@@ -24,3 +24,10 @@ macro_rules! implement_entity {
         }
     )
 }
+
+
+macro_rules! entity_to_entity_mut_type {
+    ($ty:ty, $idt:ident ) => {
+        unsafe{&mut *($idt as *mut &Entity as *mut &mut $ty)};
+    }
+}
