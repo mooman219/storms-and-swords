@@ -33,7 +33,7 @@ use std::thread;
 
 use content::load_content::{EContentLoadRequst, EContentRequestResult, EContentRequestType, EContentType};
 use content::{ContentManifest, LoadContent};
-use game::World;
+use game::system::System;
 use graphics::renderer::{RenderFrame, Renderer};
 
 //буря-engine
@@ -94,6 +94,15 @@ fn main() {
     
     //"Game logic" is here, true input event processing happens here
     //so think the App Logic for a App
+
+    let _ = thread::spawn(move || {
+        let system = System::new(game_thread_request,
+            game_thread_content_id,
+            game_thread_render_frame.clone(),
+            game_thread_gets_input);
+            system.update();
+    });
+    /*
     let _ = thread::spawn(move || {
         World::update(
             game_thread_request,
@@ -102,7 +111,7 @@ fn main() {
             game_thread_gets_input,
         );
     });
-        
+        */
     //Rendering logic is here + the inital capture of input events
     //if you do not understand Glutin + Opengl, it is likely to be hard to understand what is going on here
     Renderer::render_thread(

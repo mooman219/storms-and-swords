@@ -5,7 +5,7 @@ authors = ["tucker, mooman219"]
 
 [dependencies]
 image = "*"
-glutin = "0.9"
+glutin = "0.12"
 cgmath = "*"
 threadpool = "*"
 gl = "*"

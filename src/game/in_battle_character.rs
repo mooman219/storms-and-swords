@@ -3,34 +3,31 @@ use graphics::renderer::RenderFrame;
 use cgmath::Vector2;
 use graphics::sprite_renderer::SpriteRenderData;
 
-pub struct CharacterModel {
+pub struct InBattleCharacterModel {
     grid_pos: Vector2<i32>,
     health: i32,
     name: String,
     attack: i32,
-    uid: UID,
     reverse: bool
 }
 
-impl CharacterModel {
-    pub fn new() -> CharacterModel {
-        CharacterModel {
+impl InBattleCharacterModel {
+    pub fn new() -> InBattleCharacterModel {
+        InBattleCharacterModel {
             grid_pos: Vector2::new(0, 0),
             health: 0,
             name: String::from("default"),
             attack: 0,
-            uid: 0,
             reverse: true
         }
     }
 
-    pub fn from_raw_values(grid_pos: Vector2<i32>, health: i32, name: String, attack: i32, reverse: bool, uid: UID) -> CharacterModel {
-        CharacterModel {
+    pub fn from_raw_values(grid_pos: Vector2<i32>, health: i32, name: String, attack: i32, reverse: bool) -> InBattleCharacterModel {
+        InBattleCharacterModel {
             grid_pos,
             health,
             name,
             attack,
-            uid,
             reverse
         }
     }
@@ -67,23 +64,8 @@ impl CharacterModel {
     pub fn get_name(&self) -> String {
         self.name.clone()
     }
-}
 
-
-impl Entity for CharacterModel {
-    fn get_entity_type(&self) -> EEntityType {
-        EEntityType::Character
-    }
-
-    fn get_uid(&self) -> UID {
-        self.uid
-    }
-
-    fn set_uid(&mut self, uid: UID) {
-        self.uid = uid;
-    }
-
-    fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
+    pub fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
         let render_data = SpriteRenderData {
             pos: [self.grid_pos.x as f32 * 110.0f32 - 990.0, self.grid_pos.y as f32 * 110.0f32],
             sprite_name: String::from("character_sheet_58"),
