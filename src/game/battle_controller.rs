@@ -8,27 +8,21 @@ pub struct StartBattleMessage {}
 
 pub struct BattleController {
     in_battle_characters: Vec<InBattleCharacterModel>,
-    count: i32
+    count: i32,
+    current_active_character: usize
 }
 
 impl BattleController {
     pub fn new() -> BattleController {
         BattleController {
             in_battle_characters: vec![],
-            count: 0
+            count: 0,
+            current_active_character: 0
         }
     }
-}
 
-impl Controller for BattleController {
-    fn start(&mut self) {
-        
-    }
-
-    fn update(&mut self, message_bag: &mut MessageBag){
-        if message_bag.start_game_message.len() > 0 {
-            message_bag.start_game_message.drain(..);
-            for i in 0..5 {
+    pub fn generate_troops(&mut self) {
+        for i in 0..5 {
                 let v = Vector2::new(1, 1 * i - 2);
                 let ch_1 = InBattleCharacterModel::from_raw_values(v,
                                                                 100,
@@ -45,6 +39,19 @@ impl Controller for BattleController {
                 self.in_battle_characters.push(ch_1);
                 self.in_battle_characters.push(ch_2);  
           }
+    }
+}
+
+impl Controller for BattleController {
+
+    fn start(&mut self) {
+        
+    }
+
+    fn update(&mut self, message_bag: &mut MessageBag){
+        if message_bag.start_battle_message.len() > 0 {
+            message_bag.start_battle_message.drain(..);
+            self.generate_troops();
         }
         self.count += 1;
         
@@ -58,4 +65,5 @@ impl Controller for BattleController {
             character.add_to_render_frame(render_frame);
         }
     }
+    
 }

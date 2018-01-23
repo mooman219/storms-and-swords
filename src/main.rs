@@ -34,6 +34,7 @@ use std::thread;
 use content::load_content::{EContentLoadRequst, EContentRequestResult, EContentRequestType, EContentType};
 use content::{ContentManifest, LoadContent};
 use game::system::System;
+use game::input::InputMessage;
 use graphics::renderer::{RenderFrame, Renderer};
 
 //буря-engine
@@ -69,7 +70,7 @@ fn main() {
     let (game_thread_render_frame, render_thread_render_frame): (SyncSender<RenderFrame>, Receiver<RenderFrame>) =
         mpsc::sync_channel(3);
 
-    let (game_input_thread, game_thread_gets_input): (Sender<glutin::KeyboardInput>, Receiver<glutin::KeyboardInput>) =
+    let (game_input_thread, game_thread_gets_input): (Sender<InputMessage>, Receiver<InputMessage>) =
         mpsc::channel();
 
     

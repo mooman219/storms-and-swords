@@ -10,6 +10,7 @@ use gl::types::*;
 use glutin;
 use glutin::{GlContext, VirtualKeyCode};
 use content::load_content::{EContentType, EContentLoadRequst};
+use game::input::*;
 
 use frame_timer::FrameTimer;
 use graphics::square_renderer::{SquareRenderData, SquareRenderer};
@@ -44,7 +45,7 @@ pub struct Renderer {
     from_game_thread: Receiver<RenderFrame>,
     _to_content_manifest: Sender<EContentLoadRequst>,
     _from_content_manifest: Receiver<EContentType>,
-    to_game_thread_with_input: Sender<glutin::KeyboardInput>,
+    to_game_thread_with_input: Sender<InputMessage>,
     sprite_name_to_texture_id: HashMap<String, String>,
 }
 
@@ -53,7 +54,7 @@ impl Renderer {
         from_game_thread: Receiver<RenderFrame>,
         to_content_manifest: Sender<EContentLoadRequst>,
         from_content_manifest: Receiver<EContentType>,
-        to_game_thread_with_input: Sender<glutin::KeyboardInput>,
+        to_game_thread_with_input: Sender<InputMessage>,
     ) -> Renderer {
         Renderer {
             ortho_matrix: ortho(-1000.0f32, 1000.0f32, -1000.0f32, 1000.0f32, 0.0, 10.0),
@@ -69,7 +70,7 @@ impl Renderer {
         from_game_thread: Receiver<RenderFrame>,
         to_content_manifest: Sender<EContentLoadRequst>,
         from_content_manifest: Receiver<EContentType>,
-        to_game_thread_with_input: Sender<glutin::KeyboardInput>,
+        to_game_thread_with_input: Sender<InputMessage>,
     ) {
 
 
@@ -201,8 +202,15 @@ impl Renderer {
                             }
 
                             let _ = self.to_game_thread_with_input.send(
-                                input_event,
+                                InputMessage::KeyboardEvent(input_event),
                             );
+                        },
+                        glutin::WindowEvent::CursorMoved{
+                            device_id, 
+                            position,
+                            modifiers
+                        } => {
+                            let _ = self.to_game_thread_with_input.send(InputMessage::CursorEvent(position));
                         },
                         glutin::WindowEvent::Resized(_width, _height) => {
                             // TODO

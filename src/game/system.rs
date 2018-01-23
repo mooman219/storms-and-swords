@@ -5,20 +5,27 @@ use game::battle_controller::*;
 use std::sync::mpsc::{Receiver, Sender, SyncSender};
 use content::load_content::{EContentRequestType, EContentRequestResult};
 use glutin;
+use game::game_controller::*;
 use game::Input;
 use frame_timer::FrameTimer;
-
+use game::input::InputMessage;
 
 pub struct MessageBag {
+    pub start_game_message: Vec<StartGameMessage>,
+    pub start_battle_message: Vec<StartBattleMessage>,
     pub generate_playfield_messages: Vec<GeneratePlayfieldMessage>,
-    pub start_game_message: Vec<StartBattleMessage>,
+    pub new_controllers: Vec<Box<Controller>>,
+    pub input: Input,
 }
 
 impl MessageBag {
     pub fn new() -> MessageBag {
         MessageBag {
             generate_playfield_messages: vec![],
-            start_game_message: vec![]
+            start_game_message: vec![],
+            start_battle_message: vec![],
+            new_controllers: vec![],
+            input: Input::new(),
         }
     }
 }
@@ -26,12 +33,10 @@ impl MessageBag {
 pub struct System {
     pub message_bag: MessageBag,
     pub controllers: Vec<Box<Controller>>,
-    pub input: Input,
-
     pub to_content_server: Sender<EContentRequestType>,
     pub from_cotent_server: Receiver<EContentRequestResult>,
     pub to_render_thread: SyncSender<RenderFrame>,
-    pub from_render_thread_for_input: Receiver<glutin::KeyboardInput>,
+    pub from_render_thread_for_input: Receiver<InputMessage>,
 
 }
 
@@ -39,7 +44,7 @@ impl System {
     pub fn new(to_content_server: Sender<EContentRequestType>,
                from_cotent_server: Receiver<EContentRequestResult>,
                to_render_thread: SyncSender<RenderFrame>,
-               from_render_thread_for_input: Receiver<glutin::KeyboardInput>) -> System {
+               from_render_thread_for_input: Receiver<InputMessage>) -> System {
                    
         System {
             message_bag: MessageBag::new(),
@@ -47,17 +52,17 @@ impl System {
             to_content_server: to_content_server,
             from_cotent_server: from_cotent_server,
             to_render_thread: to_render_thread,
-            from_render_thread_for_input: from_render_thread_for_input,
-            input: Input::new()
+            from_render_thread_for_input: from_render_thread_for_input
         }
     }
 
     pub fn update(mut self) {
         let mut count = 0;
         let mut frame_timer = FrameTimer::new();
-        self.controllers.push(Box::new(PlayfieldController::new()));
-        self.controllers.push(Box::new(BattleController::new()));
         
+        self.controllers.push(Box::new(GameController::new()));
+        self.message_bag.start_game_message.push(StartGameMessage{});
+
         for controller in self.controllers.iter_mut() {
             controller.start();
         }
@@ -70,11 +75,11 @@ impl System {
                 let current_iter = self.from_render_thread_for_input.try_iter();
                 for event in current_iter {
                 //    println!("{:?}", event);
-                    self.input.process_key_event(event);
+                    self.message_bag.input.process_event(event);
                 }
             }
             if count == 1 {
-                self.message_bag.start_game_message.push(StartBattleMessage{});
+                self.message_bag.start_game_message.push(StartGameMessage{});
             }
 
             for controller in self.controllers.iter_mut() {
@@ -88,8 +93,11 @@ impl System {
             }
 
             let _ = self.to_render_thread.try_send(render_frame);
-            
-            self.input.end_of_frame_clean();
+            for mut new_controllers in self.message_bag.new_controllers.drain(..) {
+                new_controllers.start();
+                self.controllers.push(new_controllers);
+            }
+            self.message_bag.input.end_of_frame_clean();
             frame_timer.frame_end();
         }
         //send frame over to renderer

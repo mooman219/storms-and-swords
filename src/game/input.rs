@@ -10,18 +10,27 @@ pub enum KeyState {
     Idle
 }
 
+pub enum InputMessage {
+    KeyboardEvent(KeyboardInput),
+    CursorEvent((f64, f64))
+}
+
 pub struct Input {
     key_state: HashMap<VirtualKeyCode, KeyState>,
+    current_mouse_pos: (f64, f64)
 }
 
 impl Input {
     pub fn new() -> Input {
         Input { 
             key_state: HashMap::new(),
+            current_mouse_pos: (0f64, 0f64)
         }
     }
 
-    
+    pub fn get_current_mouse_pos(&self) -> (f64, f64) {
+        self.current_mouse_pos
+    }
 
     pub fn get_key_down(_virtual_key_code: KeyboardInput) -> bool {
         
@@ -65,6 +74,20 @@ impl Input {
         }
     }
 
+    pub fn process_event(&mut self, new_event: InputMessage) {
+        match new_event {
+            InputMessage::CursorEvent(pos) => {
+               self.process_mouse_input(pos);
+            },
+            InputMessage::KeyboardEvent(event) => {
+                self.process_key_event(event);
+            }
+        }
+    }
+
+    pub fn process_mouse_input(&mut self, new_mouse_pos: (f64, f64)) {
+        self.current_mouse_pos = new_mouse_pos;
+    }
 
     //this function is the main ingestion for the input
     //the rules for input state are as follows

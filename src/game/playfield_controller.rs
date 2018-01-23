@@ -8,8 +8,6 @@ const TILE_WIDTH: f32 = 110.0;
 const TILE_HEIGHT: f32 = 110.0;
 
 pub struct GeneratePlayfieldMessage {
-    pub pos: Vector2<i32>,
-    pub tile_type: ETileType
 }
 
 
@@ -97,12 +95,8 @@ impl PlayfieldController {
             grid_for_tile: vec![]
         }
     }
-}
 
-impl Controller for PlayfieldController {
-    
-    fn start(&mut self) {
-        
+    pub fn new_playfield(&mut self) {
         for x in 0..50 {
             self.grid_for_tile.push(vec![]);
             for y in 0..50 {
@@ -111,7 +105,7 @@ impl Controller for PlayfieldController {
                         Tile::new_with_pos_and_tile_type(
                                 Vector2::new(x as i32 * (TILE_WIDTH as i32) - 990, y as i32 * (TILE_HEIGHT as i32) - 1000),
                                 ETileType::GrassCenter
-                              )
+                            )
                         );
                 }
                 else {
@@ -125,17 +119,23 @@ impl Controller for PlayfieldController {
             }
         }
     }
+}
+
+impl Controller for PlayfieldController {
+    
+    fn start(&mut self) {
+        
+    }
 
     fn update(&mut self, message_bag: &mut MessageBag) {
         if message_bag.generate_playfield_messages.len() > 0 {
-            let new_tiles = message_bag.generate_playfield_messages.drain(..);
-            //add the tile to grid_pos[new_tiles.x][new_tiles.y]
-            for tile in new_tiles {
-                let pos = tile.pos;
-                let new_tile  = Tile::new_with_pos_and_tile_type(tile.pos, tile.tile_type);        
-                self.grid_for_tile[pos.x as usize][pos.y as usize] = new_tile;
-            }
+            message_bag.generate_playfield_messages.drain(..);    
+            self.new_playfield();
         }
+
+        let current_mouse = message_bag.input.get_current_mouse_pos();
+        println!("{}, {}", (current_mouse.0 / TILE_WIDTH as f64), (current_mouse.1 / TILE_HEIGHT as f64) as i64);
+
     }
 
     fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
@@ -145,5 +145,4 @@ impl Controller for PlayfieldController {
             }
         }
     }
-
 }

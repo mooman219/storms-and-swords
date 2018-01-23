@@ -6,6 +6,7 @@ pub mod playfield_controller;
 pub mod in_battle_character;
 pub mod battle_controller;
 pub mod controller;
+pub mod game_controller;
 
 pub use self::input::Input;
 pub type ContentId = u64;
