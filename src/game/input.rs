@@ -85,7 +85,9 @@ impl Input {
         }
     }
 
-    pub fn process_mouse_input(&mut self, new_mouse_pos: (f64, f64)) {
+    pub fn process_mouse_input(&mut self, mut new_mouse_pos: (f64, f64)) {
+        new_mouse_pos.0 = new_mouse_pos.0 / 1600.0;
+        new_mouse_pos.1 = new_mouse_pos.1 / 1550.0;
         self.current_mouse_pos = new_mouse_pos;
     }
 
