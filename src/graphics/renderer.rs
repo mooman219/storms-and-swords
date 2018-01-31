@@ -153,6 +153,7 @@ impl Renderer {
             .with_dimensions(BASE_SCREEN_WIDTH as u32, BASE_SCREEN_HEIGHT as u32);
         let context = glutin::ContextBuilder::new();
         let gl_window = glutin::GlWindow::new(window, context, &events_loop).unwrap();
+        let hidpi_scale_factor =  gl_window.hidpi_factor();
 
         unsafe { gl_window.make_current() }.unwrap();
 
@@ -213,7 +214,11 @@ impl Renderer {
                             position,
                             ..
                         } => {
-                            let _ = self.to_game_thread_with_input.send(InputMessage::CursorEvent(position));
+                            //hidpi will create problems with mac monitors thinking that they are twice the size that they think they are
+                            //we divide the sampled mouse positions by it, which will leave it alone (mouse_pos/1) for regular monitors
+                            //cut it in have for monitors that have this problem 
+                            let adjust_for_scale_factor = (position.0 / hidpi_scale_factor as f64, position.1 / hidpi_scale_factor as f64);
+                            let _ = self.to_game_thread_with_input.send(InputMessage::CursorEvent(adjust_for_scale_factor));
                         },
                         glutin::WindowEvent::Resized(_width, _height) => {
                             // TODO

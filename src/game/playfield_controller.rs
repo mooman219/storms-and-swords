@@ -139,7 +139,7 @@ impl Controller for PlayfieldController {
             self.new_playfield();
         }
 
-     //    println!("{:?}", message_bag.input.get_current_mouse_pos());
+         println!("{:?}", PlayfieldController::convert_current_mouse_pos_to_tile(message_bag.input.get_current_mouse_pos()));
 
     }
 

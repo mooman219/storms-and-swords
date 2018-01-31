@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+use graphics::renderer::{BASE_SCREEN_HEIGHT, BASE_SCREEN_WIDTH};
 use glutin::{self, KeyboardInput, VirtualKeyCode};
 #[derive(Eq, Copy, Clone, Hash, PartialEq, Debug)]
 pub enum KeyState {
@@ -86,9 +86,8 @@ impl Input {
     }
 
     pub fn process_mouse_input(&mut self, mut new_mouse_pos: (f64, f64)) {
-        println!("{}", new_mouse_pos.0);
-        new_mouse_pos.0 = new_mouse_pos.0 / 1280.0f64;
-        new_mouse_pos.1 = new_mouse_pos.1 / 1550.0;
+        new_mouse_pos.0 = new_mouse_pos.0 / BASE_SCREEN_WIDTH as f64;
+        new_mouse_pos.1 = new_mouse_pos.1 / BASE_SCREEN_HEIGHT as f64;
         self.current_mouse_pos = new_mouse_pos;
     }
 
