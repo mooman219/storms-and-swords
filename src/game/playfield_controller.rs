@@ -68,6 +68,10 @@ impl Tile {
         }
     }
 
+    pub fn set_tile_type (&mut self, tile_type: ETileType) {
+        self.tile_type = tile_type;
+    }
+
     pub fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
         let render_data = SpriteRenderData {
             pos: [self.grid_pos.x as f32, self.grid_pos.y as f32],
@@ -86,13 +90,17 @@ impl Tile {
 }
 
 pub struct PlayfieldController {
-    grid_for_tile: Vec<Vec<Tile>>
+    grid_for_tile: Vec<Vec<Tile>>,
+    current_mouse_pos: (f64, f64),
+    previous_tile: (usize, usize)
 }
 
 impl PlayfieldController {
     pub fn new() -> PlayfieldController {
         PlayfieldController {
-            grid_for_tile: vec![]
+            grid_for_tile: vec![],
+            current_mouse_pos: (0.0, 0.0),
+            previous_tile: (255, 255)
         }
     }
 
@@ -121,9 +129,16 @@ impl PlayfieldController {
     }
 
 
-    pub fn convert_current_mouse_pos_to_tile(mouse_pos: (f64, f64)) -> (i64, i64) {
-        let x_change = mouse_pos.0 as f32 * (SCREEN_SCALE * BASE_SCREEN_WIDTH);
-        (x_change as i64, 0i64)
+    pub fn convert_current_mouse_pos_to_tile(mouse_pos: (f64, f64)) -> (usize, usize) {
+        let mut x_change = mouse_pos.0 as f32 * (SCREEN_SCALE * BASE_SCREEN_WIDTH) / TILE_WIDTH;
+        let mut y_change = mouse_pos.1 as f32 * (SCREEN_SCALE * BASE_SCREEN_HEIGHT) / TILE_HEIGHT;
+        if x_change < 0.0 {
+            x_change = 0.0;
+        }
+        if y_change < 0.0 {
+            y_change = 0.0;
+        }
+        (x_change as usize, y_change as usize)
     }
 }
 
@@ -134,12 +149,26 @@ impl Controller for PlayfieldController {
     }
 
     fn update(&mut self, message_bag: &mut MessageBag) {
+
         if message_bag.generate_playfield_messages.len() > 0 {
             message_bag.generate_playfield_messages.drain(..);    
             self.new_playfield();
         }
 
-         println!("{:?}", PlayfieldController::convert_current_mouse_pos_to_tile(message_bag.input.get_current_mouse_pos()));
+        if self.current_mouse_pos != message_bag.input.get_current_mouse_pos() {
+            self.current_mouse_pos = message_bag.input.get_current_mouse_pos();
+            let grid_index = PlayfieldController::convert_current_mouse_pos_to_tile(self.current_mouse_pos);
+            let possible_row = self.grid_for_tile.get_mut(grid_index.0);
+            match possible_row {
+                Some(row) => {
+                    let possible_tile = row.get_mut(grid_index.1);
+                    match possible_tile {
+                        Some(tile) => {
+                            tile.set_tile_type(ETileType::Moutain);               
+                        },
+                        None => {}}},None => {}
+            }
+        }
 
     }
 

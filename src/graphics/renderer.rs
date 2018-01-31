@@ -153,7 +153,7 @@ impl Renderer {
             .with_dimensions(BASE_SCREEN_WIDTH as u32, BASE_SCREEN_HEIGHT as u32);
         let context = glutin::ContextBuilder::new();
         let gl_window = glutin::GlWindow::new(window, context, &events_loop).unwrap();
-        let hidpi_scale_factor =  gl_window.hidpi_factor();
+        let hidpi_scale_factor = gl_window.hidpi_factor();
 
         unsafe { gl_window.make_current() }.unwrap();
 

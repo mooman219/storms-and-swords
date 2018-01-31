@@ -1,4 +1,9 @@
 use game::controller::Controller;
+
+use game::game_controller::GameController;
+use game::battle_controller::BattleController;
+use game::playfield_controller::PlayfieldController;
+
 use graphics::renderer::RenderFrame;
 use game::playfield_controller::*;
 use game::battle_controller::*;
@@ -16,6 +21,9 @@ pub struct MessageBag {
     pub generate_playfield_messages: Vec<GeneratePlayfieldMessage>,
     pub new_controllers: Vec<Box<Controller>>,
     pub input: Input,
+    pub game_controller: GameController,
+    pub playfield_controller: PlayfieldController,
+    pub battle_controller: BattleController,
 }
 
 impl MessageBag {
@@ -26,6 +34,9 @@ impl MessageBag {
             start_battle_message: vec![],
             new_controllers: vec![],
             input: Input::new(),
+            game_controller: GameController::new(),
+            playfield_controller: PlayfieldController::new(),
+            battle_controller: BattleController::new()
         }
     }
 }
@@ -54,6 +65,23 @@ impl System {
             from_render_thread_for_input: from_render_thread_for_input
         }
     }
+    /*
+fn loop() {
+    let messagebag = new message bag;
+    match desired state {
+
+    }
+}*/
+    pub fn main_menu(&mut self, message_bag: &mut MessageBag) {
+        //
+    }
+
+    pub fn battle(&mut self, message_bag: &mut MessageBag) {
+        // 1
+        // 2
+    }
+
+    
 
     pub fn update(mut self) {
         let mut count = 0;
