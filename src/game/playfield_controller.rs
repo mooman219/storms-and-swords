@@ -1,6 +1,6 @@
 use game::controller::Controller;
 use game::system::*;
-use graphics::renderer::RenderFrame;
+use graphics::renderer::{RenderFrame, SCREEN_SCALE, BASE_SCREEN_HEIGHT, BASE_SCREEN_WIDTH};
 use cgmath::Vector2;
 use graphics::sprite_renderer::SpriteRenderData;
 
@@ -103,7 +103,7 @@ impl PlayfieldController {
                 if x >= 1 && x < 18 && y >= 1 && y < 18 {
                     self.grid_for_tile[x].push(
                         Tile::new_with_pos_and_tile_type(
-                                Vector2::new(x as i32 * (TILE_WIDTH as i32) - 1000, y as i32 * (TILE_HEIGHT as i32) - 1000),
+                                Vector2::new(x as i32 * ((TILE_WIDTH as i32)), y as i32 * (TILE_HEIGHT as i32)),
                                 ETileType::GrassCenter
                             )
                         );
@@ -111,7 +111,7 @@ impl PlayfieldController {
                 else {
                     self.grid_for_tile[x].push(
                         Tile::new_with_pos_and_tile_type(
-                                Vector2::new(x as i32 * (TILE_WIDTH as i32) - 1000, y as i32 * (TILE_HEIGHT as i32) - 1000),
+                                Vector2::new(x as i32 * ((TILE_WIDTH as i32)), y as i32 * (TILE_HEIGHT as i32)),
                                 ETileType::Ocean
                             )
                     );
@@ -121,10 +121,9 @@ impl PlayfieldController {
     }
 
 
-    pub fn convert_current_mouse_pos_to_tile(mouse_pos: (f64, f64)) -> (i64, i64){
-        let x_tile = ((((mouse_pos.0 * 1000.0) - 500.0) / 55.0) + 0.6).floor() as i64;
-        let y_tile = ((((mouse_pos.1 * 1000.0) - 500.0) / 55.0) + 0.6).floor() as i64;
-        (x_tile, y_tile)
+    pub fn convert_current_mouse_pos_to_tile(mouse_pos: (f64, f64)) -> (i64, i64) {
+        let x_change = mouse_pos.0 as f32 * (SCREEN_SCALE * BASE_SCREEN_WIDTH);
+        (x_change as i64, 0i64)
     }
 }
 
@@ -140,7 +139,7 @@ impl Controller for PlayfieldController {
             self.new_playfield();
         }
 
-        println!("{:?}", PlayfieldController::convert_current_mouse_pos_to_tile(message_bag.input.get_current_mouse_pos()));
+     //    println!("{:?}", message_bag.input.get_current_mouse_pos());
 
     }
 

@@ -67,7 +67,7 @@ impl InBattleCharacterModel {
 
     pub fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
         let render_data = SpriteRenderData {
-            pos: [self.grid_pos.x as f32 * 110.0f32 - 990.0, self.grid_pos.y as f32 * 110.0f32],
+            pos: [self.grid_pos.x as f32 * 110.0f32, self.grid_pos.y as f32 * 110.0f32 ],
             sprite_name: String::from("character_sheet_58"),
             height: 110.0f32,
             width: 110.0f32,

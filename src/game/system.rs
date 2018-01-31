@@ -37,7 +37,6 @@ pub struct System {
     pub from_cotent_server: Receiver<EContentRequestResult>,
     pub to_render_thread: SyncSender<RenderFrame>,
     pub from_render_thread_for_input: Receiver<InputMessage>,
-
 }
 
 impl System {

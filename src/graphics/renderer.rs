@@ -5,6 +5,10 @@ use std::sync::mpsc::{Receiver, Sender};
 
 use cgmath::{Matrix4, ortho};
 
+pub const SCREEN_SCALE : f32 = 3.5f32;
+pub const BASE_SCREEN_WIDTH : f32 = 1280.0f32;
+pub const BASE_SCREEN_HEIGHT : f32 = 720.0f32;
+
 use gl;
 use gl::types::*;
 use glutin;
@@ -15,7 +19,7 @@ use game::input::*;
 use frame_timer::FrameTimer;
 use graphics::square_renderer::{SquareRenderData, SquareRenderer};
 use graphics::circle_renderer::{CircleRenderData, CircleRenderer};
-use graphics::sprite_renderer::{SpriteRenderData, SpriteRenderer, SpriteRecordData, SpriteRenderBoxData};
+use graphics::sprite_renderer::{SpriteRenderData, SpriteRenderer, SpriteRecordData};
 use serde_json;
 
 #[derive(Clone)]
@@ -57,7 +61,7 @@ impl Renderer {
         to_game_thread_with_input: Sender<InputMessage>,
     ) -> Renderer {
         Renderer {
-            ortho_matrix: ortho(-1000.0f32, 1000.0f32, -1000.0f32, 1000.0f32, 0.0, 10.0),
+            ortho_matrix: ortho(0.0f32, BASE_SCREEN_WIDTH * SCREEN_SCALE, 0.0f32, BASE_SCREEN_HEIGHT * SCREEN_SCALE, 0.0, 10.0),
             from_game_thread: from_game_thread,
             _to_content_manifest: to_content_manifest,
             _from_content_manifest: from_content_manifest,
@@ -146,7 +150,7 @@ impl Renderer {
 
         let window = glutin::WindowBuilder::new()
             .with_title("Storm and Swords")
-            .with_dimensions(800, 1000);
+            .with_dimensions(BASE_SCREEN_WIDTH as u32, BASE_SCREEN_HEIGHT as u32);
         let context = glutin::ContextBuilder::new();
         let gl_window = glutin::GlWindow::new(window, context, &events_loop).unwrap();
 
@@ -205,10 +209,9 @@ impl Renderer {
                                 InputMessage::KeyboardEvent(input_event),
                             );
                         },
-                        glutin::WindowEvent::CursorMoved{
-                            device_id, 
+                        glutin::WindowEvent::CursorMoved{ 
                             position,
-                            modifiers
+                            ..
                         } => {
                             let _ = self.to_game_thread_with_input.send(InputMessage::CursorEvent(position));
                         },

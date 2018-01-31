@@ -178,17 +178,17 @@ impl SpriteRenderer {
             let box_data = box_data.unwrap();
             vertex_array.extend(
                 &[
-                    (-0.5 * crd.width) + crd.pos[0],//x
-                    (0.5 * crd.height) + crd.pos[1],//y
+                    crd.pos[0],//x
+                    (crd.height) + crd.pos[1],//y
                     crd.depth,
-                    (0.5 * crd.width) + crd.pos[0],
-                    (0.5 * crd.height) + crd.pos[1],
+                    (crd.width) + crd.pos[0],
+                    (crd.height) + crd.pos[1],
                     crd.depth,
-                    (-0.5 * crd.width) + crd.pos[0],
-                    (-0.5 * crd.height) + crd.pos[1],
+                    crd.pos[0],
+                     crd.pos[1],
                     crd.depth,
-                    (0.5 * crd.width) + crd.pos[0],
-                    (-0.5 * crd.height) + crd.pos[1],
+                    (crd.width) + crd.pos[0],
+                    crd.pos[1],
                     crd.depth
                 ],
             );

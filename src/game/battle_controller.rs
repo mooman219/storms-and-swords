@@ -22,15 +22,15 @@ impl BattleController {
     }
 
     pub fn generate_troops(&mut self) {
-        for i in 0..5 {
-                let v = Vector2::new(1, 1 * i - 2);
+        for i in 5..10 {
+                let v = Vector2::new(1, 1 * i);
                 let ch_1 = InBattleCharacterModel::from_raw_values(v,
                                                                 100,
                                                                 String::from("hello"),
                                                                 10, 
                                                                 true);
 
-                let v_2 = Vector2::new(17, 1 * i - 2);
+                let v_2 = Vector2::new(17, 1 * i);
                 let ch_2 = InBattleCharacterModel::from_raw_values(v_2,
                                                                 100,
                                                                 String::from("hello"),
