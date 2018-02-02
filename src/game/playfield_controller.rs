@@ -1,8 +1,8 @@
-use game::controller::Controller;
-use game::system::*;
 use graphics::renderer::{RenderFrame, SCREEN_SCALE, BASE_SCREEN_HEIGHT, BASE_SCREEN_WIDTH};
 use cgmath::Vector2;
+use game::message_bag::MessageBag;
 use graphics::sprite_renderer::SpriteRenderData;
+use game::battle_controller::StartBattleMessage;
 
 const TILE_WIDTH: f32 = 110.0;
 const TILE_HEIGHT: f32 = 110.0;
@@ -92,15 +92,13 @@ impl Tile {
 pub struct PlayfieldController {
     grid_for_tile: Vec<Vec<Tile>>,
     current_mouse_pos: (f64, f64),
-    previous_tile: (usize, usize)
 }
 
 impl PlayfieldController {
     pub fn new() -> PlayfieldController {
         PlayfieldController {
             grid_for_tile: vec![],
-            current_mouse_pos: (0.0, 0.0),
-            previous_tile: (255, 255)
+            current_mouse_pos: (0.0, 0.0)
         }
     }
 
@@ -133,28 +131,23 @@ impl PlayfieldController {
         let mut x_change = mouse_pos.0 as f32 * (SCREEN_SCALE * BASE_SCREEN_WIDTH) / TILE_WIDTH;
         let mut y_change = mouse_pos.1 as f32 * (SCREEN_SCALE * BASE_SCREEN_HEIGHT) / TILE_HEIGHT;
         if x_change < 0.0 {
-            x_change = 0.0;
+            x_change = 0.0; 
         }
         if y_change < 0.0 {
             y_change = 0.0;
         }
         (x_change as usize, y_change as usize)
     }
-}
 
-impl Controller for PlayfieldController {
-    
-    fn start(&mut self) {
-        
-    }
-
-    fn update(&mut self, message_bag: &mut MessageBag) {
-
+    pub fn check_for_new_playfield_message(&mut self, message_bag: &mut MessageBag) {
         if message_bag.generate_playfield_messages.len() > 0 {
-            message_bag.generate_playfield_messages.drain(..);    
+            message_bag.generate_playfield_messages.drain(..);
+            message_bag.start_battle_message.push(StartBattleMessage{});
             self.new_playfield();
         }
+    }
 
+    pub fn set_active_tile(&mut self, message_bag: &mut MessageBag) {
         if self.current_mouse_pos != message_bag.input.get_current_mouse_pos() {
             self.current_mouse_pos = message_bag.input.get_current_mouse_pos();
             let grid_index = PlayfieldController::convert_current_mouse_pos_to_tile(self.current_mouse_pos);
@@ -169,15 +162,13 @@ impl Controller for PlayfieldController {
                         None => {}}},None => {}
             }
         }
-
     }
 
-
-    fn add_to_render_frame(&self, render_frame: &mut RenderFrame) {
+    pub fn render_playfield(&mut self, render_frame: &mut RenderFrame) {
         for vec in &self.grid_for_tile {
-            for tile in vec {
-                tile.add_to_render_frame(render_frame);
-            }
+                for tile in vec {
+                    tile.add_to_render_frame(render_frame);
+                }
         }
     }
 }

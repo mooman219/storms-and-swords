@@ -1,4 +1,5 @@
 use game::system::*;
+use game::message_bag::MessageBag;
 use graphics::renderer::RenderFrame;
 
 pub trait Controller {

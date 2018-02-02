@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use graphics::renderer::{BASE_SCREEN_HEIGHT, BASE_SCREEN_WIDTH};
 use glutin::{self, KeyboardInput, VirtualKeyCode};
 #[derive(Eq, Copy, Clone, Hash, PartialEq, Debug)]
+
 pub enum KeyState {
     Pressed,
     HeldBuffer,//there is a small dealy between holding down a key and its repeat speed, so we keys in this state for that period
@@ -30,11 +31,6 @@ impl Input {
 
     pub fn get_current_mouse_pos(&self) -> (f64, f64) {
         self.current_mouse_pos
-    }
-
-    pub fn get_key_down(_virtual_key_code: KeyboardInput) -> bool {
-        
-        return false;
     }
 
     //this should only return true if the key in question has been pressed in the same frame as it is being tested in
@@ -80,6 +76,7 @@ impl Input {
                self.process_mouse_input(pos);
             },
             InputMessage::KeyboardEvent(event) => {
+                println!("{:?}", event);
                 self.process_key_event(event);
             }
         }

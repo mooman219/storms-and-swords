@@ -1,45 +1,16 @@
 use game::controller::Controller;
 
 use game::game_controller::GameController;
-use game::battle_controller::BattleController;
-use game::playfield_controller::PlayfieldController;
 
+use game::battle_controller::{BattleController, BattleControllerState};
+use game::playfield_controller::PlayfieldController;
+use game::main_menu_controller::MainMenuController;
 use graphics::renderer::RenderFrame;
-use game::playfield_controller::*;
-use game::battle_controller::*;
 use std::sync::mpsc::{Receiver, Sender, SyncSender};
 use content::load_content::{EContentRequestType, EContentRequestResult};
-use glutin;
-use game::game_controller::*;
-use game::Input;
 use frame_timer::FrameTimer;
 use game::input::InputMessage;
-
-pub struct MessageBag {
-    pub start_game_message: Vec<StartGameMessage>,
-    pub start_battle_message: Vec<StartBattleMessage>,
-    pub generate_playfield_messages: Vec<GeneratePlayfieldMessage>,
-    pub new_controllers: Vec<Box<Controller>>,
-    pub input: Input,
-    pub game_controller: GameController,
-    pub playfield_controller: PlayfieldController,
-    pub battle_controller: BattleController,
-}
-
-impl MessageBag {
-    pub fn new() -> MessageBag {
-        MessageBag {
-            generate_playfield_messages: vec![],
-            start_game_message: vec![],
-            start_battle_message: vec![],
-            new_controllers: vec![],
-            input: Input::new(),
-            game_controller: GameController::new(),
-            playfield_controller: PlayfieldController::new(),
-            battle_controller: BattleController::new()
-        }
-    }
-}
+use game::message_bag::{MessageBag, CurrentState};
 
 pub struct System {
     pub message_bag: MessageBag,
@@ -48,6 +19,11 @@ pub struct System {
     pub from_cotent_server: Receiver<EContentRequestResult>,
     pub to_render_thread: SyncSender<RenderFrame>,
     pub from_render_thread_for_input: Receiver<InputMessage>,
+    pub game_controller: GameController,
+    pub battle_controller: BattleController,
+    pub playfield_controller: PlayfieldController,
+    pub main_menu_controller: MainMenuController,
+    pub current_state: CurrentState
 }
 
 impl System {
@@ -62,23 +38,13 @@ impl System {
             to_content_server: to_content_server,
             from_cotent_server: from_cotent_server,
             to_render_thread: to_render_thread,
-            from_render_thread_for_input: from_render_thread_for_input
+            from_render_thread_for_input: from_render_thread_for_input,
+            battle_controller: BattleController::new(),
+            playfield_controller: PlayfieldController::new(),
+            main_menu_controller: MainMenuController::new(),
+            game_controller: GameController::new(),
+            current_state: CurrentState::MainMenu
         }
-    }
-    /*
-fn loop() {
-    let messagebag = new message bag;
-    match desired state {
-
-    }
-}*/
-    pub fn main_menu(&mut self, message_bag: &mut MessageBag) {
-        //
-    }
-
-    pub fn battle(&mut self, message_bag: &mut MessageBag) {
-        // 1
-        // 2
     }
 
     
@@ -86,6 +52,34 @@ fn loop() {
     pub fn update(mut self) {
         let mut count = 0;
         let mut frame_timer = FrameTimer::new();
+        let mut message_bag = MessageBag::new();
+
+
+        loop {
+            frame_timer.frame_start();
+            
+            {
+                //this must be in its own block as it causes an immtuable borrow of the self varible
+                let current_iter = self.from_render_thread_for_input.try_iter();
+                for event in current_iter {
+                    self.message_bag.input.process_event(event);
+                }
+            }
+
+            match self.current_state {        
+                CurrentState::MainMenu => {
+                    self.main_menu(&mut message_bag);
+                },
+                CurrentState::Battle => {
+                    self.battle(&mut message_bag);
+                }
+            }
+
+
+            self.current_state = message_bag.next_state;
+            frame_timer.frame_end();
+        }
+        /*
         
         self.controllers.push(Box::new(GameController::new()));
         self.message_bag.start_game_message.push(StartGameMessage{});
@@ -97,14 +91,7 @@ fn loop() {
         loop {
             count+=1;
             frame_timer.frame_start();
-            {
-                //this must be in its own block as it causes an immtuable borrow of the self varible
-                let current_iter = self.from_render_thread_for_input.try_iter();
-                for event in current_iter {
-                //    println!("{:?}", event);
-                    self.message_bag.input.process_event(event);
-                }
-            }
+            
             if count == 1 {
                 self.message_bag.start_game_message.push(StartGameMessage{});
             }
@@ -120,13 +107,38 @@ fn loop() {
             }
 
             let _ = self.to_render_thread.try_send(render_frame);
-            for mut new_controllers in self.message_bag.new_controllers.drain(..) {
-                new_controllers.start();
-                self.controllers.push(new_controllers);
-            }
             self.message_bag.input.end_of_frame_clean();
             frame_timer.frame_end();
         }
-        //send frame over to renderer
+        */
+    }
+
+    fn main_menu(&mut self, message_bag: &mut MessageBag) {
+        //TODO: Find a better solution for rendering    
+        let mut render_frame = RenderFrame::new(0, None, None, None);
+        self.main_menu_controller.check_for_input(message_bag);
+        self.game_controller.check_for_battle_start(message_bag);
+        self.main_menu_controller.render_main_menu(&mut render_frame);
+        let _ = self.to_render_thread.try_send(render_frame);
+    
+    }
+
+    fn battle(&mut self, message_bag: &mut MessageBag) {
+
+        let mut render_frame = RenderFrame::new(0, None, None, None);
+
+        match self.battle_controller.current_battle_controller_state {
+            BattleControllerState::Setup => {
+                self.playfield_controller.check_for_new_playfield_message(message_bag);
+                self.battle_controller.battle_setup(message_bag);
+            },
+            BattleControllerState::InBattle => {
+                self.playfield_controller.set_active_tile(message_bag);
+                self.playfield_controller.render_playfield(&mut render_frame);
+                self.battle_controller.render_characters(&mut render_frame);
+            }
+        }
+
+        let _ = self.to_render_thread.try_send(render_frame);
     }
 }

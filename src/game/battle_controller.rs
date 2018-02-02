@@ -1,23 +1,25 @@
-use game::controller::Controller;
-use game::system::MessageBag;
+use game::message_bag::MessageBag;
 use game::in_battle_character::InBattleCharacterModel;
 use graphics::renderer::RenderFrame;
 use cgmath::Vector2;
+
+pub enum BattleControllerState {
+    Setup,
+    InBattle
+}
 
 pub struct StartBattleMessage {}
 
 pub struct BattleController {
     in_battle_characters: Vec<InBattleCharacterModel>,
-    count: i32,
-    current_active_character: usize
+    pub current_battle_controller_state: BattleControllerState
 }
 
 impl BattleController {
     pub fn new() -> BattleController {
         BattleController {
             in_battle_characters: vec![],
-            count: 0,
-            current_active_character: 0
+            current_battle_controller_state: BattleControllerState::Setup
         }
     }
 
@@ -40,30 +42,17 @@ impl BattleController {
                 self.in_battle_characters.push(ch_2);  
           }
     }
-}
 
-impl Controller for BattleController {
-
-    fn start(&mut self) {
-        
-    }
-
-    fn update(&mut self, message_bag: &mut MessageBag){
+    pub fn battle_setup(&mut self, message_bag: &mut MessageBag) {
         if message_bag.start_battle_message.len() > 0 {
             message_bag.start_battle_message.drain(..);
             self.generate_troops();
         }
-        self.count += 1;
-        
-        if self.count % 60 == 0 {
-            self.in_battle_characters[0].set_pos(Vector2::new(5, 5));
-        }
     }
 
-    fn add_to_render_frame(&self, render_frame: &mut RenderFrame){
+    pub fn render_characters(&mut self, render_frame: &mut RenderFrame) {
         for character in self.in_battle_characters.iter() {
             character.add_to_render_frame(render_frame);
         }
     }
-    
 }
