@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use graphics::renderer::{BASE_SCREEN_HEIGHT, BASE_SCREEN_WIDTH};
 use glutin::{self, KeyboardInput, VirtualKeyCode};
-#[derive(Eq, Copy, Clone, Hash, PartialEq, Debug)]
 
+#[derive(Eq, Copy, Clone, Hash, PartialEq, Debug)]
 pub enum KeyState {
     Pressed,
-    HeldBuffer,//there is a small dealy between holding down a key and its repeat speed, so we keys in this state for that period
+    HeldBuffer,//there is a small dealy between holding down a key and its repeat speed, so we place keys in this state for that period
     Released, 
     Held,
     Idle
@@ -34,11 +34,12 @@ impl Input {
     }
 
     //this should only return true if the key in question has been pressed in the same frame as it is being tested in
-    pub fn on_key_pressed(&self, virtual_key_code: VirtualKeyCode) -> bool {
-        
+    pub fn on_key_pressed(&mut self, virtual_key_code: VirtualKeyCode) -> bool {
+       // println!("{:?}", self.key_state);
         if !self.key_state.contains_key(&virtual_key_code) {
             return false;
         }
+        
         return self.key_state.get(&virtual_key_code).unwrap() == &KeyState::Pressed;
     }
 
@@ -76,7 +77,6 @@ impl Input {
                self.process_mouse_input(pos);
             },
             InputMessage::KeyboardEvent(event) => {
-                println!("{:?}", event);
                 self.process_key_event(event);
             }
         }
@@ -97,6 +97,7 @@ impl Input {
     //You are Held after being Pressed twice before hearing a released event
     //you are idle if it has been more then a single frame since you have been released
     pub fn process_key_event(&mut self, input_event: KeyboardInput) {
+
         if !self.key_state.contains_key(&input_event.virtual_keycode.as_ref().unwrap()) {
             self.key_state.insert(input_event.virtual_keycode.unwrap(), KeyState::Idle);
         }
@@ -105,7 +106,7 @@ impl Input {
 
         //the user has just struck the key and the main thread has processed the event
         if input_event.state == glutin::ElementState::Pressed {
-            
+      //      println!("{:?}", input_event);
             let val = self.key_state.get_mut(&input_event.virtual_keycode.unwrap()).unwrap();
          
             if *val == KeyState::Pressed {
@@ -138,6 +139,5 @@ impl Input {
                 }
             }
         }
-
     }
 }

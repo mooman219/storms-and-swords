@@ -3,7 +3,6 @@ use game::controller::Controller;
 use game::game_controller::GameController;
 
 use game::battle_controller::{BattleController, BattleControllerState};
-use game::playfield_controller::PlayfieldController;
 use game::main_menu_controller::MainMenuController;
 use graphics::renderer::RenderFrame;
 use std::sync::mpsc::{Receiver, Sender, SyncSender};
@@ -13,7 +12,6 @@ use game::input::InputMessage;
 use game::message_bag::{MessageBag, CurrentState};
 
 pub struct System {
-    pub message_bag: MessageBag,
     pub controllers: Vec<Box<Controller>>,
     pub to_content_server: Sender<EContentRequestType>,
     pub from_cotent_server: Receiver<EContentRequestResult>,
@@ -21,7 +19,7 @@ pub struct System {
     pub from_render_thread_for_input: Receiver<InputMessage>,
     pub game_controller: GameController,
     pub battle_controller: BattleController,
-    pub playfield_controller: PlayfieldController,
+//    pub playfield_controller: PlayfieldController,
     pub main_menu_controller: MainMenuController,
     pub current_state: CurrentState
 }
@@ -33,14 +31,13 @@ impl System {
                from_render_thread_for_input: Receiver<InputMessage>) -> System {
                    
         System {
-            message_bag: MessageBag::new(),
             controllers: vec![],
             to_content_server: to_content_server,
             from_cotent_server: from_cotent_server,
             to_render_thread: to_render_thread,
             from_render_thread_for_input: from_render_thread_for_input,
             battle_controller: BattleController::new(),
-            playfield_controller: PlayfieldController::new(),
+   //         playfield_controller: PlayfieldController::new(),
             main_menu_controller: MainMenuController::new(),
             game_controller: GameController::new(),
             current_state: CurrentState::MainMenu
@@ -62,7 +59,7 @@ impl System {
                 //this must be in its own block as it causes an immtuable borrow of the self varible
                 let current_iter = self.from_render_thread_for_input.try_iter();
                 for event in current_iter {
-                    self.message_bag.input.process_event(event);
+                    message_bag.input.process_event(event);
                 }
             }
 
@@ -75,7 +72,7 @@ impl System {
                 }
             }
 
-
+            message_bag.input.end_of_frame_clean();
             self.current_state = message_bag.next_state;
             frame_timer.frame_end();
         }
@@ -127,18 +124,15 @@ impl System {
 
         let mut render_frame = RenderFrame::new(0, None, None, None);
 
-        match self.battle_controller.current_battle_controller_state {
+        match self.battle_controller.get_current_battle_state() {
             BattleControllerState::Setup => {
-                self.playfield_controller.check_for_new_playfield_message(message_bag);
                 self.battle_controller.battle_setup(message_bag);
             },
             BattleControllerState::InBattle => {
-                self.playfield_controller.set_active_tile(message_bag);
-                self.playfield_controller.render_playfield(&mut render_frame);
+                self.battle_controller.battle_idle(message_bag);
                 self.battle_controller.render_characters(&mut render_frame);
             }
         }
-
         let _ = self.to_render_thread.try_send(render_frame);
     }
 }

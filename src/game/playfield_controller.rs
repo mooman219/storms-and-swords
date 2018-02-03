@@ -7,6 +7,31 @@ use game::battle_controller::StartBattleMessage;
 const TILE_WIDTH: f32 = 110.0;
 const TILE_HEIGHT: f32 = 110.0;
 
+
+//ok so this is complicated, but to make our lives simpler
+//least of reasons why this system was adopted
+//1. Rust does not like it when you want more then once referance out for an object at a time
+//2. For operations like say pathfinding, we need to be able to start at a tile, move to others, and find out what is on those tiles
+//3. Tiles can be seen as a stack of attributes and objects on it
+
+//so forexample a very basic tile, would be a stack with just the tile would be like
+//TileType("GrassCenter")
+
+//one with a character on it would be
+// TileOccupant::Character(UID for character)
+// TileOccupant::TileType("GrassCenter"),
+
+
+//a tile with a character, and a object that was there before the character would be lie
+// TileOccupant::Character(UID for character)
+// TileOccupant::Object(ID for Object)//think like a rock, or structure, something that would be likely to occupy a tile but isnt likely to move on 
+// TileOccupant::TileType("GrassCenter"),
+pub enum TileOccupant {
+    TileType(String),
+    Object(u32),
+    Character(u32)
+}
+
 pub struct GeneratePlayfieldMessage {
 }
 
